@@ -248,12 +248,18 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
         stop_id = self.entry.data.get(CONF_STOP_LOCATION_ID, "")
         stop_name = self.entry.data.get(CONF_STOP_NAME, "")
 
-        # For stop departures, we query a plan from this stop or geolocation
+        # Select reference destination avoiding collision if stop is Central
+        ref_id = "ST:place_censta"
+        ref_name = "Central Station"
+        if stop_id == "ST:place_censta" or "central" in stop_name.lower():
+            ref_id = "ST:place_romsta"
+            ref_name = "Roma Street Station"
+
         plan = await self.client.plan_journey(
             start_location_id=stop_id,
             start_name=stop_name,
-            end_location_id="ST:place_censta",  # reference hub
-            end_name="Central Station",
+            end_location_id=ref_id,
+            end_name=ref_name,
             transport_modes=self.transport_modes,
             time_search_mode="LeaveAfter",
             max_walking_distance=self.max_walking_distance,
@@ -265,8 +271,28 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
             plan=plan,
             trip_updates=tu_res,
             origin_name_fallback=stop_name,
-            destination_name_fallback="Central",
+            destination_name_fallback=ref_name,
         )
+
+        # Collect upcoming departures from across planned itineraries
+        departures: list[dict[str, Any]] = []
+        for itin in plan.itineraries:
+            for leg in itin.legs:
+                if leg.travelMode.lower() != "walk":
+                    departures.append(
+                        {
+                            "route": (leg.legRoute.name if leg.legRoute else None)
+                            or leg.tripHeadsign
+                            or "Transit",
+                            "vehicle": leg.travelMode,
+                            "headsign": leg.tripHeadsign,
+                            "departure_time": leg.departureTimeUtc,
+                            "platform": leg.origin.platform if leg.origin else None,
+                        }
+                    )
+                    break
+        if not departures:
+            departures = journey_summary.itinerary_legs
 
         stop_summary = StopSummary(
             stop_id=stop_id,
@@ -277,7 +303,7 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
             next_platform=journey_summary.origin_platform,
             next_headsign=journey_summary.next_service_headsign,
             delay_mins=journey_summary.delay_mins,
-            departures=journey_summary.itinerary_legs,
+            departures=departures,
             disruptions_count=journey_summary.disruptions_count,
             disruptions=journey_summary.disruptions,
             last_updated=journey_summary.last_updated,

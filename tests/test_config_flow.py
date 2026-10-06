@@ -569,3 +569,64 @@ async def test_step_reconfigure_stop_location_not_found(
         )
     assert result2["type"] is FlowResultType.FORM
     assert result2["errors"][CONF_STOP_NAME] == "location_not_found"
+
+
+async def test_step_reconfigure_journey_unexpected_error(
+    hass: HomeAssistant,
+) -> None:
+    """Test unexpected exception in journey reconfigure."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="journey_reconfig_unexpected",
+        data={
+            CONF_MODE: MODE_JOURNEY,
+            CONF_NAME: "My Journey",
+            CONF_START_NAME: "Central",
+            CONF_END_NAME: "Springfield",
+        },
+    )
+    entry.add_to_hass(hass)
+    result = await entry.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=RuntimeError("Crash"),
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_START_NAME: "Central", CONF_END_NAME: "Springfield"},
+        )
+    assert result2["type"] is FlowResultType.FORM
+    assert result2["errors"]["base"] == "unknown"
+
+
+async def test_step_reconfigure_stop_unexpected_error(
+    hass: HomeAssistant,
+) -> None:
+    """Test unexpected exception in stop reconfigure."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="stop_reconfig_unexpected",
+        data={
+            CONF_MODE: MODE_STOP,
+            CONF_NAME: "My Stop",
+            CONF_STOP_NAME: "Roma Street",
+        },
+    )
+    entry.add_to_hass(hass)
+    result = await entry.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=RuntimeError("Crash"),
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_STOP_NAME: "Roma Street"},
+        )
+    assert result2["type"] is FlowResultType.FORM
+    assert result2["errors"]["base"] == "unknown"

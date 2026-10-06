@@ -298,8 +298,11 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                                 ),
                             },
                         )
-                except Exception:
+                except TranslinkApiError:
                     errors["base"] = "cannot_connect"
+                except Exception:
+                    _LOGGER.exception("Unexpected error during journey reconfiguration")
+                    errors["base"] = "unknown"
             else:
                 stop_query = str(user_input.get(CONF_STOP_NAME, "")).strip()
                 session = async_get_clientsession(self.hass)
@@ -320,8 +323,11 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                                 ),
                             },
                         )
-                except Exception:
+                except TranslinkApiError:
                     errors["base"] = "cannot_connect"
+                except Exception:
+                    _LOGGER.exception("Unexpected error during stop reconfiguration")
+                    errors["base"] = "unknown"
 
         if mode == MODE_JOURNEY:
             schema = vol.Schema(

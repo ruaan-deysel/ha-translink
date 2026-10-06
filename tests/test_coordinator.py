@@ -248,3 +248,94 @@ async def test_coordinator_save_cache_error(
     coordinator._store.async_save = AsyncMock(side_effect=OSError("Disk full"))
     # Should not raise
     await coordinator._async_save_cache({"test": "data"})
+
+
+async def test_coordinator_update_stop_central_station(
+    hass: HomeAssistant,
+    plan_response_data: dict[str, Any],
+) -> None:
+    """Test stop update when stop is Central Station avoiding self-destination."""
+    plan_result = JourneyPlanResult.model_validate(plan_response_data)
+    entry = MockConfigEntry(
+        domain="translink",
+        unique_id="stop_central",
+        data={
+            "mode": "stop",
+            "name": "Central Station",
+            "stop_location_id": "ST:place_censta",
+            "stop_name": "Central Station",
+        },
+    )
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, entry)
+
+    coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
+    coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
+    coordinator._store.async_save = AsyncMock()
+
+    summary = await coordinator._async_update_data()
+    assert isinstance(summary, StopSummary)
+    assert len(summary.departures) > 0
+    # verify plan_journey was called with end_location_id="ST:place_romsta"
+    coordinator.client.plan_journey.assert_called_once()
+    call_kwargs = coordinator.client.plan_journey.call_args[1]
+    assert call_kwargs["end_location_id"] == "ST:place_romsta"
+
+
+async def test_coordinator_update_stop_empty_departures(
+    hass: HomeAssistant,
+    stop_entry: MockConfigEntry,
+) -> None:
+    """Test stop update falls back to journey legs when no transit departures."""
+    plan_result = JourneyPlanResult(itineraries=[])
+
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, stop_entry)
+
+    coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
+    coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
+    coordinator._store.async_save = AsyncMock()
+
+    summary = await coordinator._async_update_data()
+    assert isinstance(summary, StopSummary)
+    assert summary.departures == []
+
+
+async def test_coordinator_update_stop_with_walk_and_transit_legs(
+    hass: HomeAssistant,
+    stop_entry: MockConfigEntry,
+) -> None:
+    """Test stop departures loop skips walk legs before taking transit leg."""
+    from custom_components.translink.api.models import JourneyItinerary, JourneyLeg
+
+    plan_result = JourneyPlanResult(
+        itineraries=[
+            JourneyItinerary(
+                legs=[
+                    JourneyLeg(travelMode="Walk"),
+                    JourneyLeg(
+                        travelMode="Bus",
+                        tripHeadsign="Route 100",
+                        departureTimeUtc="2026-10-06T09:40:00Z",
+                    ),
+                ]
+            ),
+            JourneyItinerary(
+                legs=[
+                    JourneyLeg(travelMode="Walk"),
+                ]
+            ),
+        ]
+    )
+
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, stop_entry)
+
+    coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
+    coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
+    coordinator._store.async_save = AsyncMock()
+
+    summary = await coordinator._async_update_data()
+    assert isinstance(summary, StopSummary)
+    assert len(summary.departures) == 1
+    assert summary.departures[0]["vehicle"] == "Bus"
