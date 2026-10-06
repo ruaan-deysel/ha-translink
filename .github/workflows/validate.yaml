@@ -1,0 +1,65 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  validate-version:
+    name: Version & Changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate manifest.json and CHANGELOG.md version sync
+        run: |
+          python3 - <<'EOF'
+          import json
+          import re
+          import sys
+          import tomllib
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path("custom_components/translink/manifest.json").read_text(encoding="utf-8")
+          )
+          pyproject = tomllib.loads(
+              Path("pyproject.toml").read_text(encoding="utf-8")
+          )
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+
+          manifest_ver = str(manifest.get("version", "")).strip()
+          pyproject_ver = str(pyproject.get("project", {}).get("version", "")).strip()
+
+          ha_re = re.compile(r"^[0-9]{4}\.(1[0-2]|[1-9])\.[0-9]+([a-z0-9.-]+)?$")
+          if not ha_re.match(manifest_ver):
+              sys.exit(f"Invalid Home Assistant version format in manifest.json: {manifest_ver}")
+          if manifest_ver != pyproject_ver:
+              sys.exit(f"Version mismatch: manifest.json ({manifest_ver}) != pyproject.toml ({pyproject_ver})")
+          if not re.search(rf"^##\s+\[?{re.escape(manifest_ver)}\]?", changelog, re.MULTILINE):
+              sys.exit(f"Version {manifest_ver} missing from CHANGELOG.md")
+          print(f"Version {manifest_ver} verified in manifest.json, pyproject.toml, and CHANGELOG.md")
+          EOF
+
+  validate-hacs:
+    name: HACS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+
+  validate-hassfest:
+    name: Hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Hassfest validation
+        uses: home-assistant/actions/hassfest@master

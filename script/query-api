@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Query Translink Queensland API endpoints and GTFS-Realtime feeds.
+
+Usage:
+    ./script/query-api --search "Central"
+    ./script/query-api --plan --start "Central" --end "Springfield"
+    ./script/query-api --trip-updates
+    ./script/query-api --vehicles
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+
+def _compact(payload: Any) -> str:
+    if payload is None:
+        return "null"
+    if hasattr(payload, "model_dump"):
+        return json.dumps(payload.model_dump(mode="json"), indent=2, default=str)[:5000]
+    return json.dumps(payload, indent=2, default=str)[:5000]
+
+
+async def run_query(args: argparse.Namespace) -> int:
+    from custom_components.translink.client import TranslinkClient
+
+    client = TranslinkClient()
+    try:
+        if args.search:
+            print(f"# Location search: {args.search}")
+            results = await client.search_locations(args.search)
+            print(_compact([r.model_dump(mode="json") for r in results]))
+
+        if args.plan:
+            start = args.start or "Central"
+            end = args.end or "Roma Street"
+            print(f"# Planning journey: {start} -> {end}")
+            locs_start = await client.search_locations(start)
+            locs_end = await client.search_locations(end)
+            if not locs_start or not locs_end:
+                print("Could not resolve start or end location.")
+                return 1
+            plan = await client.plan_journey(
+                start_location_id=locs_start[0].LocationId,
+                start_name=locs_start[0].Description,
+                end_location_id=locs_end[0].LocationId,
+                end_name=locs_end[0].Description,
+            )
+            print(_compact(plan))
+
+        if args.trip_updates:
+            print("# Fetching GTFS-RT Trip Updates")
+            tu = await client.fetch_trip_updates()
+            print(f"Records: {len(tu)}")
+
+        if args.vehicles:
+            print("# Fetching GTFS-RT Vehicle Positions")
+            vp = await client.fetch_vehicle_positions()
+            print(f"Records: {len(vp)}")
+
+        return 0
+    except Exception as err:  # noqa: BLE001 - CLI should print actionable error.
+        print(f"query-api failed: {err}")
+        return 1
+    finally:
+        await client.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Query Translink Queensland APIs")
+    parser.add_argument("--search", help="Search for a stop, station, or landmark")
+    parser.add_argument("--plan", action="store_true", help="Plan a journey")
+    parser.add_argument("--start", help="Journey starting location name")
+    parser.add_argument("--end", help="Journey destination name")
+    parser.add_argument(
+        "--trip-updates", action="store_true", help="Fetch GTFS trip updates"
+    )
+    parser.add_argument(
+        "--vehicles", action="store_true", help="Fetch GTFS vehicle positions"
+    )
+    args = parser.parse_args()
+
+    if not any([args.search, args.plan, args.trip_updates, args.vehicles]):
+        parser.print_help()
+        return 0
+
+    return asyncio.run(run_query(args))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

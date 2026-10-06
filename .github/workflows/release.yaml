@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "custom_components/translink/manifest.json"
+      - "CHANGELOG.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release from manifest.json & CHANGELOG.md
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Validate version and extract release notes from CHANGELOG.md
+        id: extract
+        run: |
+          python3 - <<'EOF'
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+          import tomllib
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path("custom_components/translink/manifest.json").read_text(encoding="utf-8")
+          )
+          version = str(manifest.get("version", "")).strip()
+
+          pyproject = tomllib.loads(
+              Path("pyproject.toml").read_text(encoding="utf-8")
+          )
+          pyproject_version = str(pyproject.get("project", {}).get("version", "")).strip()
+          if version != pyproject_version:
+              print(
+                  f"::error::Version mismatch: manifest.json ({version}) != pyproject.toml ({pyproject_version}).",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          # Validate Home Assistant CalVer format (e.g. 2026.10.0 or 2026.10.0b1)
+          ha_version_re = re.compile(r"^[0-9]{4}\.(1[0-2]|[1-9])\.[0-9]+([a-z0-9.-]+)?$")
+          if not ha_version_re.match(version):
+              print(
+                  f"::error::manifest.json version '{version}' does not match Home Assistant versioning (e.g. 2026.10.0).",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          changelog_text = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          pattern = re.compile(
+              rf"^##\s+\[?{re.escape(version)}\]?(?:\s+-\s+[^\n]+)?\s*$",
+              re.MULTILINE,
+          )
+          match = pattern.search(changelog_text)
+          if not match:
+              print(
+                  f"::error::Version {version} from manifest.json was not found in CHANGELOG.md.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          start_idx = match.end()
+          next_heading = re.search(r"^##\s+\[?", changelog_text[start_idx:], re.MULTILINE)
+          if next_heading:
+              notes = changelog_text[start_idx : start_idx + next_heading.start()].strip()
+          else:
+              notes = changelog_text[start_idx:].strip()
+
+          if not notes:
+              print(
+                  f"::error::CHANGELOG.md section for {version} is empty.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          notes_path = Path("release_notes.md")
+          notes_path.write_text(notes + "\n", encoding="utf-8")
+
+          # Check if release already exists in GitHub
+          release_check = subprocess.run(
+              ["gh", "release", "view", version],
+              capture_output=True,
+              text=True,
+              check=False,
+          )
+          release_exists = release_check.returncode == 0
+
+          is_prerelease = bool(re.search(r"[a-zA-Z]", version))
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"version={version}\n")
+              fh.write(f"release_exists={'true' if release_exists else 'false'}\n")
+              fh.write(f"prerelease={'true' if is_prerelease else 'false'}\n")
+              fh.write(f"make_latest={'false' if is_prerelease else 'true'}\n")
+
+          print(f"Validated version {version} (release_exists={release_exists}, prerelease={is_prerelease})")
+          EOF
+
+      - name: Create GitHub Release
+        if: steps.extract.outputs.release_exists == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.extract.outputs.version }}
+          name: ${{ steps.extract.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ steps.extract.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.extract.outputs.make_latest }}

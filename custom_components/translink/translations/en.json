@@ -1,0 +1,148 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Translink Queensland",
+        "description": "Choose whether to track a Journey between an origin and destination, or a Station/Stop departure board.",
+        "data": {
+          "mode": "Mode"
+        },
+        "data_description": {
+          "mode": "Select Journey to track commute between two places, or Stop to track upcoming departures from a station."
+        }
+      },
+      "journey": {
+        "title": "Configure Journey",
+        "description": "Specify the Starting Point and Destination for realtime journey tracking across South East Queensland.",
+        "data": {
+          "name": "Journey Name",
+          "start_name": "Starting Point (Origin)",
+          "end_name": "Destination",
+          "transport_modes": "Transport Modes",
+          "track_vehicle": "Enable Live GPS Vehicle Tracking"
+        },
+        "data_description": {
+          "name": "A friendly name for this commute (e.g. Daily Commute).",
+          "start_name": "Station, bus stop, ferry wharf, or address (e.g. Central station).",
+          "end_name": "Destination station, stop, or address (e.g. Springfield Central station).",
+          "transport_modes": "Select public transport modes to include in routing.",
+          "track_vehicle": "Create a live GPS device tracker for the active transit vehicle."
+        }
+      },
+      "stop": {
+        "title": "Configure Stop Departure Board",
+        "description": "Enter a station or bus stop name to track live upcoming departures.",
+        "data": {
+          "name": "Board Name",
+          "stop_name": "Station or Stop Name",
+          "transport_modes": "Transport Modes"
+        },
+        "data_description": {
+          "name": "Friendly name for this departure board (e.g. Roma Street Station).",
+          "stop_name": "Stop name or station (e.g. Roma Street station).",
+          "transport_modes": "Modes to monitor from this stop."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Translink",
+        "description": "Update location and transport settings for this Translink entry.",
+        "data": {
+          "start_name": "Starting Point (Origin)",
+          "end_name": "Destination",
+          "stop_name": "Station or Stop Name",
+          "transport_modes": "Transport Modes"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Translink API",
+      "location_not_found": "Could not find any matching stop or station in Translink network",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This Translink journey or stop is already configured",
+      "reconfigure_successful": "Reconfiguration was successful",
+      "reconfigure_failed": "Reconfiguration failed because the config entry could not be found"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Translink Options",
+        "description": "Customize polling frequency, walking preferences, and fare types.",
+        "data": {
+          "scan_interval": "Update Interval (seconds)",
+          "time_search_mode": "Time Search Mode",
+          "walking_speed": "Walking Speed",
+          "max_walking_distance": "Maximum Walking Distance (meters)",
+          "fare_preference": "Fare Preference",
+          "track_vehicle": "Enable Live Vehicle Tracking"
+        },
+        "data_description": {
+          "scan_interval": "How frequently to refresh realtime timetables and GPS feeds.",
+          "time_search_mode": "Whether to plan journeys leaving after current time or arriving before.",
+          "walking_speed": "Walking speed preference for transfers.",
+          "max_walking_distance": "Maximum acceptable walking distance.",
+          "fare_preference": "Preferred go card fare category to display.",
+          "track_vehicle": "Expose live GPS vehicle positions on Home Assistant maps."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_departure": {
+        "name": "Next Departure"
+      },
+      "arrival_time": {
+        "name": "Arrival Time"
+      },
+      "duration": {
+        "name": "Journey Duration"
+      },
+      "status": {
+        "name": "Journey Status",
+        "state": {
+          "scheduled": "Scheduled",
+          "on_time": "On Time",
+          "delayed": "Delayed",
+          "departed": "Departed",
+          "arrived": "Arrived",
+          "no_service": "No Service"
+        }
+      },
+      "next_service": {
+        "name": "Next Service"
+      },
+      "platform": {
+        "name": "Platform"
+      },
+      "transfers": {
+        "name": "Transfers"
+      },
+      "fare": {
+        "name": "Fare"
+      },
+      "delay": {
+        "name": "Delay"
+      },
+      "walking_distance": {
+        "name": "Walking Distance"
+      },
+      "disruptions": {
+        "name": "Disruptions"
+      },
+      "itinerary": {
+        "name": "Itinerary"
+      },
+      "departures_board": {
+        "name": "Departures Board"
+      }
+    },
+    "device_tracker": {
+      "vehicle_tracker": {
+        "name": "Live Vehicle"
+      }
+    }
+  }
+}

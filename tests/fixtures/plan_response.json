@@ -1,0 +1,572 @@
+{
+  "itineraries": [
+    {
+      "durationMins": 41,
+      "endTimeUtc": "2026-10-06T00:24:00Z",
+      "fares": [
+        {
+          "type": "GoCardAdult",
+          "name": "go card adult",
+          "price": 0.5
+        },
+        {
+          "type": "GoCardConcession",
+          "name": "go card concession",
+          "price": 0.5
+        },
+        {
+          "type": "GoCardAdultOffPeak",
+          "name": "go card off-peak adult",
+          "price": 0.5
+        },
+        {
+          "type": "GoCardConcessionOffPeak",
+          "name": "go card off-peak concession",
+          "price": 0.5
+        },
+        {
+          "type": "SinglePaperAdult",
+          "name": "Single paper adult",
+          "price": 0.5
+        },
+        {
+          "type": "SinglePaperConcession",
+          "name": "Single paper concession",
+          "price": 0.5
+        }
+      ],
+      "maximumZone": 1,
+      "minimumZone": 1,
+      "totalZones": 1,
+      "firstDepartureTimeUtc": "2026-10-05T23:43:00Z",
+      "lastArrivalTimeUtc": "2026-10-06T00:24:00Z",
+      "legs": [
+        {
+          "arrivalTimeUtc": "2026-10-06T00:24:00Z",
+          "departureTimeUtc": "2026-10-05T23:43:00Z",
+          "distanceM": 30049,
+          "durationMins": 41,
+          "origin": {
+            "id": "SI:600019",
+            "name": "Central station, platform 5, Brisbane City",
+            "platform": "5",
+            "zone": "1",
+            "stopType": "Train",
+            "position": {
+              "lat": -27.465647,
+              "lng": 153.025962
+            },
+            "station": {
+              "id": "ST:place_censta",
+              "name": "Central station",
+              "stopType": "Train",
+              "position": {
+                "lat": -27.466076,
+                "lng": 153.02632
+              }
+            }
+          },
+          "polyline": "jksfDg{~d\\x@xAbBrCZp@?r@C`ACn@WfBMp@i@fCcBvHcA|CCPqAlGWzBEv@AbAn@tC\\hBNb@|AbFvAxFRlAdChJ|@xDf@hB`DdNj@`Cp@fB|@tDn@`Cr@tDNl@v@zB|@vAzA|A|BvAlAx@`BbAnBrBrBvBhB|BtAxAn@r@r@p@p@~@z@z@z@j@~@d@j@L@?nFx@dCf@xAXxCx@vBt@pCjAzCtA`IjDz@\\vEpA`Cl@lAVB?~@PpAVnBn@|A`Az@v@f@r@nDnJhJxRfAtB~@dBxB~DrA~BpArChBbEz@fEBRb@rCX|CXvBb@jCb@tA`@bAdA|AtAfApAr@dAR`BJtCFnB?xEEzMGpBJt@FxAPp@^jAp@PJnCtBlBtBz@p@ZP`@JtGhBjDdAdBd@|A\\jD^fEH~EYhEJ@?nCBpD?lBa@p@K|@SfGwBpHoCzGgChCyA`DgArAe@|Cs@~NgFfKoDnDeAdCe@|Gk@xDs@nDUH?hAEhEDtKo@nHe@pAGjDOdAGdAAxDZT@dEZlGh@zJn@xJl@xEXvEf@~ATlAZvAf@bBnAfA`Aj@v@f@z@n@fBv@bCp@lBn@tA|@zAr@d@f@\\bAt@pDlCbAfArBtB`BbBlBbC`CfDbB|Cf@vAR`ATlAV`C\\lD\\|A\\pAn@vAj@bAp@v@n@r@~DbDfDhCtDzCpEnD`DdCfDnCrCvD`BfDl@~AZvA`@~Bd@`EZxD\\xEd@zFFx@PhAX`BV~@|K`T`AnBr@jAR\\VXrAhApAz@v@d@fBx@pA^xAV|AP|FM`WcCnBUbAMpA[vCmA`KoFzAa@vAWpCUtCOvHOdEE~Iy@fDe@hDSjB?tABbBPbDh@fC`@hMhDzBj@pHhBpHjCtAXbDv@lHrA`QhCnGp@nJj@tWr@bM`@`VfChGb@`DKpENbCf@vCv@|D~@fB`@hGvAlIlBrIlArPfBfy@pJrE~@hFfB~DlBhHvE|QxO|XtVzVlTlIhHtHlHnGvFhA`AvPpNnShRnKjJtDbDdDpDrBpCrBjD`BbDbBbEz@rChAlE`AtEPjE`@dJ",
+          "legRoute": {
+            "id": "T:Train:RPSP",
+            "regionId": "T",
+            "regionName": "SEQ",
+            "vehicle": "Train",
+            "code": "RPSP",
+            "direction": "Upward",
+            "isExpress": false,
+            "isFree": false,
+            "isPrepaid": false,
+            "isTransLinkService": true,
+            "isTransLinkFare": true,
+            "isSchool": false,
+            "name": "T2 Springfield Central",
+            "headsign": "T2 Springfield Central",
+            "headsignShort": "T2 Springfield Central",
+            "operator": "Queensland Rail",
+            "hexColorCode": "#6cc6e9",
+            "textColorCode": "#1d1d1d",
+            "lines": [
+              {
+                "id": "T:Train::96",
+                "name": "T2 Kippa-Ring",
+                "code": "T2 Kippa-Ring",
+                "textColorCode": "#1d1d1d",
+                "hexColorCode": "#6cc6e9"
+              },
+              {
+                "id": "T:Train::10",
+                "name": "T2 Springfield Central",
+                "code": "T2 Springfield Central",
+                "textColorCode": "#1d1d1d",
+                "hexColorCode": "#6cc6e9"
+              }
+            ]
+          },
+          "numberOfStops": 15,
+          "skippedStops": [
+            {
+              "id": "SI:600029",
+              "name": "Roma Street station, platform 8"
+            },
+            {
+              "id": "SI:600279",
+              "name": "Milton station, platform 1"
+            },
+            {
+              "id": "SI:600283",
+              "name": "Auchenflower station, platform 1"
+            },
+            {
+              "id": "SI:600287",
+              "name": "Toowong station, platform 1"
+            },
+            {
+              "id": "SI:600291",
+              "name": "Taringa station, platform 1"
+            },
+            {
+              "id": "SI:600295",
+              "name": "Indooroopilly station, platform 1"
+            },
+            {
+              "id": "SI:600299",
+              "name": "Chelmer station, platform 1"
+            },
+            {
+              "id": "SI:600303",
+              "name": "Graceville station, platform 1"
+            },
+            {
+              "id": "SI:600309",
+              "name": "Sherwood station, platform 1"
+            },
+            {
+              "id": "SI:600314",
+              "name": "Corinda station, platform 2"
+            },
+            {
+              "id": "SI:600318",
+              "name": "Oxley station, platform 1"
+            },
+            {
+              "id": "SI:600321",
+              "name": "Darra station, platform 1"
+            },
+            {
+              "id": "SI:600325",
+              "name": "Richlands station, platform 1"
+            },
+            {
+              "id": "SI:600088",
+              "name": "Springfield station, platform 1"
+            }
+          ],
+          "sameVehicleContinuation": false,
+          "destination": {
+            "id": "SI:600089",
+            "name": "Springfield Central station, platform 1, Springfield Central",
+            "platform": "1",
+            "zone": "1",
+            "stopType": "Train",
+            "position": {
+              "lat": -27.674192,
+              "lng": 152.902811
+            },
+            "station": {
+              "id": "ST:place_spcsta",
+              "name": "Springfield Central station",
+              "stopType": "Train",
+              "position": {
+                "lat": -27.674125,
+                "lng": 152.902793
+              }
+            }
+          },
+          "travelMode": "Train",
+          "tripId": "s_T_RPSP_8_20261006_39040861",
+          "tripHeadsign": "Springfield Central station",
+          "maxNoticeSeverity": "Minor",
+          "notices": [
+            {
+              "id": 1028991,
+              "severity": "Informative"
+            },
+            {
+              "id": 1048276,
+              "severity": "Minor"
+            }
+          ]
+        }
+      ],
+      "startTimeUtc": "2026-10-05T23:43:00Z",
+      "transfers": 0,
+      "messages": [],
+      "isAirportLine": false,
+      "isCrossRegion": false
+    },
+    {
+      "durationMins": 56,
+      "endTimeUtc": "2026-10-06T00:24:00Z",
+      "fares": [
+        {
+          "type": "GoCardAdult",
+          "name": "go card adult",
+          "price": 0.5
+        },
+        {
+          "type": "GoCardConcession",
+          "name": "go card concession",
+          "price": 0.5
+        },
+        {
+          "type": "GoCardAdultOffPeak",
+          "name": "go card off-peak adult",
+          "price": 0.5
+        },
+        {
+          "type": "GoCardConcessionOffPeak",
+          "name": "go card off-peak concession",
+          "price": 0.5
+        },
+        {
+          "type": "SinglePaperAdult",
+          "name": "Single paper adult",
+          "price": 0.5
+        },
+        {
+          "type": "SinglePaperConcession",
+          "name": "Single paper concession",
+          "price": 0.5
+        }
+      ],
+      "maximumZone": 1,
+      "minimumZone": 1,
+      "totalZones": 1,
+      "firstDepartureTimeUtc": "2026-10-05T23:28:00Z",
+      "lastArrivalTimeUtc": "2026-10-06T00:24:00Z",
+      "legs": [
+        {
+          "arrivalTimeUtc": "2026-10-05T23:56:00Z",
+          "departureTimeUtc": "2026-10-05T23:28:00Z",
+          "distanceM": 15995,
+          "durationMins": 28,
+          "origin": {
+            "id": "SI:600019",
+            "name": "Central station, platform 5, Brisbane City",
+            "platform": "5",
+            "zone": "1",
+            "stopType": "Train",
+            "position": {
+              "lat": -27.465647,
+              "lng": 153.025962
+            },
+            "station": {
+              "id": "ST:place_censta",
+              "name": "Central station",
+              "stopType": "Train",
+              "position": {
+                "lat": -27.466076,
+                "lng": 153.02632
+              }
+            }
+          },
+          "polyline": "jksfDg{~d\\x@xAbBrCZp@?r@C`ACn@WfBMp@i@fCcBvHcA|CCPqAlGWzBEv@AbAn@tC\\hBNb@|AbFvAxFRlAdChJ|@xDf@hB`DdNj@`Cp@fB|@tDn@`Cr@tDNl@v@zB|@vAzA|A|BvAlAx@`BbAnBrBrBvBhB|BtAxAn@r@r@p@p@~@z@z@z@j@~@d@j@L@?nFx@dCf@xAXxCx@vBt@pCjAzCtA`IjDz@\\vEpA`Cl@lAVB?~@PpAVnBn@|A`Az@v@f@r@nDnJhJxRfAtB~@dBxB~DrA~BpArChBbEz@fEBRb@rCX|CXvBb@jCb@tA`@bAdA|AtAfApAr@dAR`BJtCFnB?xEEzMGpBJt@FxAPp@^jAp@PJnCtBlBtBz@p@ZP`@JtGhBjDdAdBd@|A\\jD^fEH~EYhEJ@?nCBpD?lBa@p@K|@SfGwBpHoCzGgChCyA`DgArAe@|Cs@~NgFfKoDnDeAdCe@|Gk@xDs@nDUH?hAEhEDtKo@nHe@pAGjDOdAGdAAxDZT@dEZlGh@zJn@xJl@xEXvEf@~ATlAZvAf@bBnAfA`Aj@v@f@z@n@fBv@bCp@lBn@tA|@zAr@d@f@\\bAt@pDlCbAfArBtB`BbBlBbC`CfDbB|Cf@vAR`ATlAV`C\\lD\\|A\\pAn@vAj@bAp@v@n@r@~DbDfDhCtDzCpEnD`DdCfDnCrCvD`BfDl@~AZvA`@~Bd@`EZxD\\xEd@zF",
+          "legRoute": {
+            "id": "T:Train:CAIP",
+            "regionId": "T",
+            "regionName": "SEQ",
+            "vehicle": "Train",
+            "code": "CAIP",
+            "direction": "Upward",
+            "isExpress": false,
+            "isFree": false,
+            "isPrepaid": false,
+            "isTransLinkService": true,
+            "isTransLinkFare": true,
+            "isSchool": false,
+            "name": "T1 Ipswich / Rosewood",
+            "headsign": "T1 Ipswich / Rosewood",
+            "headsignShort": "T1 Ipswich / Rosewood",
+            "operator": "Queensland Rail",
+            "hexColorCode": "#27855a",
+            "textColorCode": "#ffffff",
+            "lines": [
+              {
+                "id": "T:Train::3",
+                "name": "T1 Caboolture",
+                "code": "T1 Caboolture",
+                "textColorCode": "#ffffff",
+                "hexColorCode": "#27855a"
+              },
+              {
+                "id": "T:Train::8",
+                "name": "T1 Ipswich / Rosewood",
+                "code": "T1 Ipswich / Rosewood",
+                "textColorCode": "#ffffff",
+                "hexColorCode": "#27855a"
+              }
+            ]
+          },
+          "numberOfStops": 12,
+          "skippedStops": [
+            {
+              "id": "SI:600029",
+              "name": "Roma Street station, platform 8"
+            },
+            {
+              "id": "SI:600279",
+              "name": "Milton station, platform 1"
+            },
+            {
+              "id": "SI:600283",
+              "name": "Auchenflower station, platform 1"
+            },
+            {
+              "id": "SI:600287",
+              "name": "Toowong station, platform 1"
+            },
+            {
+              "id": "SI:600291",
+              "name": "Taringa station, platform 1"
+            },
+            {
+              "id": "SI:600295",
+              "name": "Indooroopilly station, platform 1"
+            },
+            {
+              "id": "SI:600299",
+              "name": "Chelmer station, platform 1"
+            },
+            {
+              "id": "SI:600303",
+              "name": "Graceville station, platform 1"
+            },
+            {
+              "id": "SI:600309",
+              "name": "Sherwood station, platform 1"
+            },
+            {
+              "id": "SI:600314",
+              "name": "Corinda station, platform 2"
+            },
+            {
+              "id": "SI:600318",
+              "name": "Oxley station, platform 1"
+            }
+          ],
+          "sameVehicleContinuation": false,
+          "destination": {
+            "id": "SI:600321",
+            "name": "Darra station, platform 1, Darra",
+            "platform": "1",
+            "zone": "1",
+            "stopType": "Train",
+            "position": {
+              "lat": -27.565959,
+              "lng": 152.952488
+            },
+            "station": {
+              "id": "ST:place_darsta",
+              "name": "Darra station",
+              "stopType": "Train",
+              "position": {
+                "lat": -27.566121,
+                "lng": 152.952481
+              }
+            }
+          },
+          "travelMode": "Train",
+          "tripId": "s_T_CAIP_8_20261006_39040641",
+          "tripHeadsign": "Ipswich station",
+          "maxNoticeSeverity": "Minor",
+          "notices": [
+            {
+              "id": 1028991,
+              "severity": "Informative"
+            },
+            {
+              "id": 1048276,
+              "severity": "Minor"
+            }
+          ]
+        },
+        {
+          "arrivalTimeUtc": "2026-10-06T00:24:00Z",
+          "departureTimeUtc": "2026-10-06T00:11:00Z",
+          "distanceM": 14054,
+          "durationMins": 13,
+          "origin": {
+            "id": "SI:600321",
+            "name": "Darra station, platform 1, Darra",
+            "platform": "1",
+            "zone": "1",
+            "stopType": "Train",
+            "position": {
+              "lat": -27.565959,
+              "lng": 152.952488
+            },
+            "station": {
+              "id": "ST:place_darsta",
+              "name": "Darra station",
+              "stopType": "Train",
+              "position": {
+                "lat": -27.566121,
+                "lng": 152.952481
+              }
+            }
+          },
+          "polyline": "h~fgDappd\\Fx@PhAX`BV~@|K`T`AnBr@jAR\\VXrAhApAz@v@d@fBx@pA^xAV|AP|FM`WcCnBUbAMpA[vCmA`KoFzAa@vAWpCUtCOvHOdEE~Iy@fDe@hDSjB?tABbBPbDh@fC`@hMhDzBj@pHhBpHjCtAXbDv@lHrA`QhCnGp@nJj@tWr@bM`@`VfChGb@`DKpENbCf@vCv@|D~@fB`@hGvAlIlBrIlArPfBfy@pJrE~@hFfB~DlBhHvE|QxO|XtVzVlTlIhHtHlHnGvFhA`AvPpNnShRnKjJtDbDdDpDrBpCrBjD`BbDbBbEz@rChAlE`AtEPjE`@dJ",
+          "legRoute": {
+            "id": "T:Train:RPSP",
+            "regionId": "T",
+            "regionName": "SEQ",
+            "vehicle": "Train",
+            "code": "RPSP",
+            "direction": "Upward",
+            "isExpress": false,
+            "isFree": false,
+            "isPrepaid": false,
+            "isTransLinkService": true,
+            "isTransLinkFare": true,
+            "isSchool": false,
+            "name": "T2 Springfield Central",
+            "headsign": "T2 Springfield Central",
+            "headsignShort": "T2 Springfield Central",
+            "operator": "Queensland Rail",
+            "hexColorCode": "#6cc6e9",
+            "textColorCode": "#1d1d1d",
+            "lines": [
+              {
+                "id": "T:Train::96",
+                "name": "T2 Kippa-Ring",
+                "code": "T2 Kippa-Ring",
+                "textColorCode": "#1d1d1d",
+                "hexColorCode": "#6cc6e9"
+              },
+              {
+                "id": "T:Train::10",
+                "name": "T2 Springfield Central",
+                "code": "T2 Springfield Central",
+                "textColorCode": "#1d1d1d",
+                "hexColorCode": "#6cc6e9"
+              }
+            ]
+          },
+          "numberOfStops": 3,
+          "skippedStops": [
+            {
+              "id": "SI:600325",
+              "name": "Richlands station, platform 1"
+            },
+            {
+              "id": "SI:600088",
+              "name": "Springfield station, platform 1"
+            }
+          ],
+          "sameVehicleContinuation": false,
+          "destination": {
+            "id": "SI:600089",
+            "name": "Springfield Central station, platform 1, Springfield Central",
+            "platform": "1",
+            "zone": "1",
+            "stopType": "Train",
+            "position": {
+              "lat": -27.674192,
+              "lng": 152.902811
+            },
+            "station": {
+              "id": "ST:place_spcsta",
+              "name": "Springfield Central station",
+              "stopType": "Train",
+              "position": {
+                "lat": -27.674125,
+                "lng": 152.902793
+              }
+            }
+          },
+          "travelMode": "Train",
+          "tripId": "s_T_RPSP_8_20261006_39040861",
+          "tripHeadsign": "Springfield Central station",
+          "maxNoticeSeverity": "Minor",
+          "notices": [
+            {
+              "id": 1048276,
+              "severity": "Minor"
+            }
+          ]
+        }
+      ],
+      "startTimeUtc": "2026-10-05T23:28:00Z",
+      "transfers": 1,
+      "messages": [],
+      "isAirportLine": false,
+      "isCrossRegion": false
+    }
+  ],
+  "searchIsInDrtArea": false,
+  "originalEnquiry": {
+    "endLocation": {
+      "description": "Springfield Central station",
+      "id": "ST:place_spcsta",
+      "position": {
+        "lat": -27.674125,
+        "lng": 152.902793
+      },
+      "suburb": "Springfield Central",
+      "type": "Landmark"
+    },
+    "fareTypes": [
+      "Free",
+      "Prepaid",
+      "Standard"
+    ],
+    "maximumWalkingDistance": 4000,
+    "searchDateTimeUtc": "2026-10-05T23:22:00Z",
+    "serviceTypes": [
+      "Express",
+      "NightLink",
+      "Regular",
+      "School"
+    ],
+    "startLocation": {
+      "description": "Central station",
+      "id": "ST:place_censta",
+      "position": {
+        "lat": -27.466076,
+        "lng": 153.02632
+      },
+      "suburb": "Brisbane City",
+      "type": "Landmark"
+    },
+    "timeSearchMode": "LeaveAfter",
+    "transportModes": [
+      "Bus",
+      "Ferry",
+      "Train",
+      "Tram"
+    ],
+    "walkingSpeed": "Normal"
+  },
+  "messages": [],
+  "drtOperators": [],
+  "notices": [
+    {
+      "id": 1028991,
+      "title": "Lift outage - Central station platforms 5/6 ",
+      "description": "From Monday 27 April until late 2026, work will be undertaken to replace the lift that services platforms 5/6 at Central station. If you rely on the lift, you will not be able to use platforms 5/6 during this time. As part of these works, the two escalators that service the platform will a",
+      "cause": "CONSTRUCTION",
+      "effect": "ACCESSIBILITY_ISSUE",
+      "startsUtc": "2026-04-26T16:00:00Z",
+      "endsUtc": "2026-12-31T13:59:00Z"
+    },
+    {
+      "id": 1048276,
+      "title": "Reduced train timetables",
+      "description": "From Monday 12 October, extra weekday services will be added to the current timetable.",
+      "cause": "STRIKE",
+      "effect": "REDUCED_SERVICE",
+      "startsUtc": "2026-05-04T16:00:00Z"
+    }
+  ]
+}
