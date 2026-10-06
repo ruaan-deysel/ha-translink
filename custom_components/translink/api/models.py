@@ -34,6 +34,16 @@ class LocationSearchResult(TranslinkApiModel):
     LocationId: str
     Description: str
 
+    @property
+    def id(self) -> str:
+        """Alias for LocationId."""
+        return self.LocationId
+
+    @property
+    def name(self) -> str:
+        """Alias for Description."""
+        return self.Description
+
 
 class Position(TranslinkApiModel):
     """Geographic position coordinates."""

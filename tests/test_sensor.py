@@ -154,6 +154,15 @@ def test_journey_sensor_properties(sample_journey_summary: JourneySummary) -> No
     attrs = sensors["next_departure"].extra_state_attributes
     assert attrs["platform"] == "5"
     assert attrs["origin"] == "Central station"
+    assert attrs["readable_time"] == "07:30 PM"
+
+    arrival_attrs = sensors["arrival_time"].extra_state_attributes
+    assert arrival_attrs["readable_time"] == "08:11 PM"
+
+    # Test None departure_time produces None readable_time
+    sample_journey_summary.departure_time = None
+    attrs_none = sensors["next_departure"].extra_state_attributes
+    assert attrs_none["readable_time"] is None
 
 
 def test_sensor_none_data() -> None:

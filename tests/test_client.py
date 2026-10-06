@@ -185,6 +185,8 @@ async def test_search_locations_success() -> None:
     assert len(results) == 1
     assert results[0].LocationId == "ST:place_censta"
     assert results[0].Description == "Central station, Brisbane City"
+    assert results[0].id == "ST:place_censta"
+    assert results[0].name == "Central station, Brisbane City"
 
     # Query too short
     empty = await client.search_locations("a")

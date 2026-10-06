@@ -48,22 +48,22 @@ async def run_query(args: argparse.Namespace) -> int:
                 print("Could not resolve start or end location.")
                 return 1
             plan = await client.plan_journey(
-                start_location_id=locs_start[0].id,
-                start_name=locs_start[0].name,
-                end_location_id=locs_end[0].id,
-                end_name=locs_end[0].name,
+                start_location_id=locs_start[0].LocationId,
+                start_name=locs_start[0].Description,
+                end_location_id=locs_end[0].LocationId,
+                end_name=locs_end[0].Description,
             )
             print(_compact(plan))
 
         if args.trip_updates:
             print("# Fetching GTFS-RT Trip Updates")
             tu = await client.fetch_trip_updates()
-            print(f"Entities: {len(tu.entities)}, Timestamp: {tu.header_timestamp}")
+            print(f"Records: {len(tu)}")
 
         if args.vehicles:
             print("# Fetching GTFS-RT Vehicle Positions")
             vp = await client.fetch_vehicle_positions()
-            print(f"Entities: {len(vp.entities)}, Timestamp: {vp.header_timestamp}")
+            print(f"Records: {len(vp)}")
 
         return 0
     except Exception as err:  # noqa: BLE001 - CLI should print actionable error.

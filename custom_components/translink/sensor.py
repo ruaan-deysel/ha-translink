@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -19,10 +21,17 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_NAME, DOMAIN, MODE_JOURNEY
+from .const import BRISBANE_TZ, CONF_NAME, DOMAIN, MODE_JOURNEY
 from .coordinator import TranslinkCoordinator
 
 PARALLEL_UPDATES = 0
+
+
+def _format_brisbane_time(dt: datetime | None) -> str | None:
+    """Format datetime in Brisbane local time (UTC+10)."""
+    if dt is None:
+        return None
+    return dt.astimezone(ZoneInfo(BRISBANE_TZ)).strftime("%I:%M %p")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -42,11 +51,7 @@ JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
         attributes_fn=lambda data: {
             "origin": data.origin_name,
             "platform": data.origin_platform,
-            "readable_time": (
-                data.departure_time.strftime("%I:%M %p")
-                if data.departure_time
-                else None
-            ),
+            "readable_time": _format_brisbane_time(data.departure_time),
         },
     ),
     TranslinkSensorEntityDescription(
@@ -57,9 +62,7 @@ JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
         attributes_fn=lambda data: {
             "destination": data.destination_name,
             "platform": data.destination_platform,
-            "readable_time": (
-                data.arrival_time.strftime("%I:%M %p") if data.arrival_time else None
-            ),
+            "readable_time": _format_brisbane_time(data.arrival_time),
         },
     ),
     TranslinkSensorEntityDescription(
@@ -169,11 +172,7 @@ STOP_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
         value_fn=lambda data: data.next_departure_time,
         attributes_fn=lambda data: {
             "platform": data.next_platform,
-            "readable_time": (
-                data.next_departure_time.strftime("%I:%M %p")
-                if data.next_departure_time
-                else None
-            ),
+            "readable_time": _format_brisbane_time(data.next_departure_time),
         },
     ),
     TranslinkSensorEntityDescription(
