@@ -202,7 +202,7 @@ def test_parse_vehicle_positions_custom_fields() -> None:
         _encode_field(1, 2, trip_desc)
         + _encode_field(2, 2, pos_desc)
         + _encode_field(8, 2, veh_desc)
-        + _encode_field(6, 0, 1728180000)  # timestamp
+        + _encode_field(5, 0, 1728180000)  # timestamp
     )
 
     entity_valid = _encode_field(1, 2, "ENT_VP_1") + _encode_field(4, 2, vp_body)

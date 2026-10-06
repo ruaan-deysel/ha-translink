@@ -164,7 +164,7 @@ def parse_vehicle_positions(raw_bytes: bytes) -> dict[str, VehiclePositionRecord
                         bearing = float(pf_val)
                     elif pf_num == 5 and isinstance(pf_val, (float, int)):
                         speed = float(pf_val)
-            elif vf_num == 6 and isinstance(vf_val, int):
+            elif vf_num == 5 and isinstance(vf_val, int):
                 timestamp = vf_val
             elif vf_num == 8 and isinstance(vf_val, bytes):  # VehicleDescriptor
                 vd_fields = _parse_fields(vf_val)

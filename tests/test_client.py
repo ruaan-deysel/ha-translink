@@ -283,6 +283,8 @@ async def test_fetch_vehicle_positions(sample_vehicle_positions_bytes: bytes) ->
     client = TranslinkClient(session=mock_session)
     vp = await client.fetch_vehicle_positions()
     assert len(vp) > 0
+    first_rec = next(iter(vp.values()))
+    assert first_rec.timestamp is not None
 
 
 @pytest.mark.asyncio
