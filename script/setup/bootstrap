@@ -49,7 +49,7 @@ if [[ -n "${REMOTE_CONTAINERS:-}" || -n "${CODESPACES:-}" ]]; then
     log_info "DevContainer/Codespaces detected - using external venv"
 elif [[ -n "${GITHUB_ACTIONS:-}" ]]; then
     # Running in GitHub Actions
-    VENV_PATH="${GITHUB_WORKSPACE:-.}/.local/ha-venv"
+    VENV_PATH=".local/ha-venv"
     VENV_IS_EXTERNAL=false
     log_info "GitHub Actions detected - using workspace venv"
 else

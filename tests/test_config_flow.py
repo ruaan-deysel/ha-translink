@@ -630,3 +630,227 @@ async def test_step_reconfigure_stop_unexpected_error(
         )
     assert result2["type"] is FlowResultType.FORM
     assert result2["errors"]["base"] == "unknown"
+
+
+async def test_journey_already_configured(hass: HomeAssistant) -> None:
+    """Test journey setup aborts when unique_id is already configured."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="journey_ST:place_censta_ST:place_spcsta",
+        data={CONF_MODE: MODE_JOURNEY},
+    )
+    entry.add_to_hass(hass)
+
+    start_loc = LocationSearchResult(
+        LocationId="ST:place_censta", Description="Central station"
+    )
+    end_loc = LocationSearchResult(
+        LocationId="ST:place_spcsta", Description="Springfield Central"
+    )
+    plan_mock = JourneyPlanResult()
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"mode": MODE_JOURNEY}
+    )
+
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=[[start_loc], [end_loc]],
+        ),
+        patch(
+            "custom_components.translink.client.TranslinkClient.plan_journey",
+            return_value=plan_mock,
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                CONF_NAME: "Duplicate Commute",
+                CONF_START_NAME: "Central station",
+                CONF_END_NAME: "Springfield Central",
+            },
+        )
+
+    assert result2["type"] is FlowResultType.ABORT
+    assert result2["reason"] == "already_configured"
+
+
+async def test_stop_already_configured(hass: HomeAssistant) -> None:
+    """Test stop setup aborts when unique_id is already configured."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="stop_ST:place_censta",
+        data={CONF_MODE: MODE_STOP},
+    )
+    entry.add_to_hass(hass)
+
+    stop_loc = LocationSearchResult(
+        LocationId="ST:place_censta", Description="Central station"
+    )
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"mode": MODE_STOP}
+    )
+
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            return_value=[stop_loc],
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                CONF_NAME: "Duplicate Stop",
+                CONF_STOP_NAME: "Central station",
+            },
+        )
+
+    assert result2["type"] is FlowResultType.ABORT
+    assert result2["reason"] == "already_configured"
+
+
+async def test_step_reconfigure_journey_same_locations_and_conflict(
+    hass: HomeAssistant,
+) -> None:
+    """Test journey reconfigure when locations remain unchanged or conflict with another entry."""
+    entry1 = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="journey_ST:place_censta_ST:place_spcsta",
+        data={
+            CONF_MODE: MODE_JOURNEY,
+            CONF_NAME: "Commute 1",
+            CONF_START_NAME: "Central station",
+            CONF_END_NAME: "Springfield Central",
+        },
+    )
+    entry1.add_to_hass(hass)
+
+    entry2 = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="journey_ST:other_ST:dest",
+        data={
+            CONF_MODE: MODE_JOURNEY,
+            CONF_NAME: "Commute 2",
+            CONF_START_NAME: "Other",
+            CONF_END_NAME: "Dest",
+        },
+    )
+    entry2.add_to_hass(hass)
+
+    start_loc = LocationSearchResult(
+        LocationId="ST:place_censta", Description="Central station"
+    )
+    end_loc = LocationSearchResult(
+        LocationId="ST:place_spcsta", Description="Springfield Central"
+    )
+
+    # 1. Reconfigure entry1 keeping the exact same locations (branch: new_unique_id == entry.unique_id)
+    flow1 = await entry1.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=[[start_loc], [end_loc]],
+        ),
+    ):
+        res1 = await hass.config_entries.flow.async_configure(
+            flow1["flow_id"],
+            {
+                CONF_START_NAME: "Central station",
+                CONF_END_NAME: "Springfield Central",
+            },
+        )
+    assert res1["type"] is FlowResultType.ABORT
+    assert res1["reason"] == "reconfigure_successful"
+
+    # 2. Reconfigure entry2 to point to entry1's locations (conflict with existing entry)
+    flow2 = await entry2.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=[[start_loc], [end_loc]],
+        ),
+    ):
+        res2 = await hass.config_entries.flow.async_configure(
+            flow2["flow_id"],
+            {
+                CONF_START_NAME: "Central station",
+                CONF_END_NAME: "Springfield Central",
+            },
+        )
+    assert res2["type"] is FlowResultType.ABORT
+    assert res2["reason"] == "already_configured"
+
+
+async def test_step_reconfigure_stop_same_location_and_conflict(
+    hass: HomeAssistant,
+) -> None:
+    """Test stop reconfigure when location remains unchanged or conflicts with another entry."""
+    entry1 = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="stop_ST:place_censta",
+        data={
+            CONF_MODE: MODE_STOP,
+            CONF_NAME: "Stop 1",
+            CONF_STOP_NAME: "Central station",
+        },
+    )
+    entry1.add_to_hass(hass)
+
+    entry2 = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="stop_ST:other_stop",
+        data={
+            CONF_MODE: MODE_STOP,
+            CONF_NAME: "Stop 2",
+            CONF_STOP_NAME: "Other Stop",
+        },
+    )
+    entry2.add_to_hass(hass)
+
+    stop_loc = LocationSearchResult(
+        LocationId="ST:place_censta", Description="Central station"
+    )
+
+    # 1. Reconfigure entry1 keeping the exact same stop (branch: new_unique_id == entry.unique_id)
+    flow1 = await entry1.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            return_value=[stop_loc],
+        ),
+    ):
+        res1 = await hass.config_entries.flow.async_configure(
+            flow1["flow_id"],
+            {CONF_STOP_NAME: "Central station"},
+        )
+    assert res1["type"] is FlowResultType.ABORT
+    assert res1["reason"] == "reconfigure_successful"
+
+    # 2. Reconfigure entry2 to point to entry1's stop (conflict)
+    flow2 = await entry2.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            return_value=[stop_loc],
+        ),
+    ):
+        res2 = await hass.config_entries.flow.async_configure(
+            flow2["flow_id"],
+            {CONF_STOP_NAME: "Central station"},
+        )
+    assert res2["type"] is FlowResultType.ABORT
+    assert res2["reason"] == "already_configured"

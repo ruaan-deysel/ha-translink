@@ -38,8 +38,7 @@ ruff format . \
     --exclude .local \
     --exclude .venv \
     --exclude venv \
-    --exclude build \
-    --exclude custom_components/translink/api
+    --exclude build
 
 log_header "Running Ruff check"
 ruff check . \
@@ -47,8 +46,7 @@ ruff check . \
     --exclude .local \
     --exclude .venv \
     --exclude venv \
-    --exclude build \
-    --exclude custom_components/translink/api
+    --exclude build
 
 # Clean up any accidental package installation from uv run
 "$SCRIPT_DIR/clean" --minimal

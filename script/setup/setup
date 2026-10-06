@@ -39,7 +39,8 @@ fi
 # Initialize Home Assistant config directory if not already done
 if [[ ! -f config/.HA_VERSION ]]; then
     log_header "Initializing Home Assistant config directory"
-    hass --config "${PWD}/config" --script ensure_config >/dev/null 2>&1 || true
+    hass --config "${PWD}/config" --script ensure_config >/dev/null \
+        || log_warning "Failed to initialise Home Assistant config directory"
 fi
 
 # Create custom_components directory if it doesn't exist

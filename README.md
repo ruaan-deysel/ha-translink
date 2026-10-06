@@ -176,7 +176,7 @@ automation:
         before: "08:30:00"
       - condition: template
         value_template: >
-          {% set dep = as_timestamp(states('sensor.daily_commute_next_departure')) %}
+          {% set dep = as_timestamp(states('sensor.daily_commute_next_departure'), none) %}
           {% if dep is not none %}
             {% set mins = ((dep - as_timestamp(now())) / 60) | int %}
             {{ mins <= 15 and mins > 10 }}

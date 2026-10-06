@@ -37,12 +37,24 @@ jobs:
           import re
           import subprocess
           import sys
+          import tomllib
           from pathlib import Path
 
           manifest = json.loads(
               Path("custom_components/translink/manifest.json").read_text(encoding="utf-8")
           )
           version = str(manifest.get("version", "")).strip()
+
+          pyproject = tomllib.loads(
+              Path("pyproject.toml").read_text(encoding="utf-8")
+          )
+          pyproject_version = str(pyproject.get("project", {}).get("version", "")).strip()
+          if version != pyproject_version:
+              print(
+                  f"::error::Version mismatch: manifest.json ({version}) != pyproject.toml ({pyproject_version}).",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
 
           # Validate Home Assistant CalVer format (e.g. 2026.10.0 or 2026.10.0b1)
           ha_version_re = re.compile(r"^[0-9]{4}\.(1[0-2]|[1-9])\.[0-9]+([a-z0-9.-]+)?$")
@@ -83,30 +95,28 @@ jobs:
           notes_path = Path("release_notes.md")
           notes_path.write_text(notes + "\n", encoding="utf-8")
 
-          # Check if tag already exists in git/GitHub
-          tag_exists = (
-              subprocess.run(
-                  ["git", "rev-parse", "-q", "--verify", f"refs/tags/{version}"],
-                  capture_output=True,
-                  text=True,
-                  check=False,
-              ).returncode
-              == 0
+          # Check if release already exists in GitHub
+          release_check = subprocess.run(
+              ["gh", "release", "view", version],
+              capture_output=True,
+              text=True,
+              check=False,
           )
+          release_exists = release_check.returncode == 0
 
           is_prerelease = bool(re.search(r"[a-zA-Z]", version))
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
               fh.write(f"version={version}\n")
-              fh.write(f"tag_exists={'true' if tag_exists else 'false'}\n")
+              fh.write(f"release_exists={'true' if release_exists else 'false'}\n")
               fh.write(f"prerelease={'true' if is_prerelease else 'false'}\n")
               fh.write(f"make_latest={'false' if is_prerelease else 'true'}\n")
 
-          print(f"Validated version {version} (tag_exists={tag_exists}, prerelease={is_prerelease})")
+          print(f"Validated version {version} (release_exists={release_exists}, prerelease={is_prerelease})")
           EOF
 
       - name: Create GitHub Release
-        if: steps.extract.outputs.tag_exists == 'false'
+        if: steps.extract.outputs.release_exists == 'false'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.extract.outputs.version }}

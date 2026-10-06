@@ -96,7 +96,9 @@ def redact_sensitive(data: Any) -> Any:
     """Recursively redact sensitive data for diagnostics."""
     if isinstance(data, dict):
         return {
-            k: "**REDACTED**" if str(k).lower() in SENSITIVE_KEYS else redact_sensitive(v)
+            k: "**REDACTED**"
+            if str(k).lower() in SENSITIVE_KEYS
+            else redact_sensitive(v)
             for k, v in data.items()
         }
     if isinstance(data, list):

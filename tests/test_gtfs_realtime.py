@@ -156,9 +156,8 @@ def test_parse_alerts_comprehensive() -> None:
 
 def test_parse_trip_updates_negative_delay_and_fields() -> None:
     """Test parse_trip_updates with negative delay, timestamps, and stop updates."""
-    # Stop time update with negative delay (-60 seconds as two's complement uint32)
-    neg_delay_uint32 = 0x100000000 - 60
-    stu_event = _encode_field(1, 0, neg_delay_uint32)  # delay
+    # Stop time update with negative delay (-60 seconds as protobuf varint)
+    stu_event = _encode_field(1, 0, -60)  # delay
     stu = _encode_field(2, 2, stu_event) + _encode_field(4, 2, "STOP_TARGET")
 
     trip_desc = _encode_field(1, 2, "TRIP_NEG") + _encode_field(5, 2, "ROUTE_NEG")
@@ -167,7 +166,7 @@ def test_parse_trip_updates_negative_delay_and_fields() -> None:
         _encode_field(1, 2, trip_desc)
         + _encode_field(2, 2, stu)
         + _encode_field(4, 0, 1728180000)  # timestamp
-        + _encode_field(5, 0, neg_delay_uint32)  # top-level delay
+        + _encode_field(5, 0, -60)  # top-level delay
     )
 
     # Valid entity and an empty entity (no trip update body)
@@ -239,6 +238,24 @@ def test_gtfs_varint_truncated() -> None:
     """Test varint loop terminates if bytes end before 0x80 bit is cleared."""
     _, offset = _parse_varint(b"\x80\x80", 0)
     assert offset == 2
+
+
+def test_gtfs_fields_truncated() -> None:
+    """Test _parse_fields terminates safely on truncated wire types 1, 2, 5."""
+    # Wire type 1 (64-bit) with only 4 bytes instead of 8
+    tag_wire1 = (1 << 3) | 1
+    data_wire1 = _encode_varint(tag_wire1) + b"\x00\x00\x00\x00"
+    assert _parse_fields(data_wire1) == []
+
+    # Wire type 2 (length-delimited) with length 10 but only 2 bytes remaining
+    tag_wire2 = (1 << 3) | 2
+    data_wire2 = _encode_varint(tag_wire2) + _encode_varint(10) + b"\x00\x00"
+    assert _parse_fields(data_wire2) == []
+
+    # Wire type 5 (32-bit fixed) with only 2 bytes instead of 4
+    tag_wire5 = (1 << 3) | 5
+    data_wire5 = _encode_varint(tag_wire5) + b"\x00\x00"
+    assert _parse_fields(data_wire5) == []
 
 
 def test_gtfs_realtime_extra_and_unknown_fields() -> None:

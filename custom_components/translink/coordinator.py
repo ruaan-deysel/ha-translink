@@ -301,4 +301,5 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
 
     async def async_shutdown(self) -> None:
         """Cleanly close coordinator connections."""
+        await super().async_shutdown()
         await self.client.close()

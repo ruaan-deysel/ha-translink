@@ -76,15 +76,21 @@ def _parse_fields(
             val, offset = _parse_varint(data, offset)
             fields.append((field_num, wire_type, val))
         elif wire_type == 1:  # 64-bit
+            if offset + 8 > limit:
+                break
             val = struct.unpack("<Q", data[offset : offset + 8])[0]
             offset += 8
             fields.append((field_num, wire_type, val))
         elif wire_type == 2:  # Length-delimited (string / bytes / submessage)
             length, offset = _parse_varint(data, offset)
+            if offset + length > limit:
+                break
             val = data[offset : offset + length]
             offset += length
             fields.append((field_num, wire_type, val))
         elif wire_type == 5:  # 32-bit float / fixed32
+            if offset + 4 > limit:
+                break
             val = struct.unpack("<f", data[offset : offset + 4])[0]
             offset += 4
             fields.append((field_num, wire_type, val))
@@ -92,6 +98,12 @@ def _parse_fields(
             # Skip unsupported wire type or stop
             break
     return fields
+
+
+def _to_int32(val: int) -> int:
+    """Convert protobuf varint to signed 32-bit integer."""
+    v = val & 0xFFFFFFFF
+    return v if v < 0x80000000 else v - 0x100000000
 
 
 def _decode_string(val: Any) -> str:
@@ -243,17 +255,11 @@ def parse_trip_updates(raw_bytes: bytes) -> dict[str, TripUpdateRecord]:
                         ste_fields = _parse_fields(stuf_val)
                         for stef_num, _, stef_val in ste_fields:
                             if stef_num == 1 and isinstance(stef_val, int):
-                                # convert 32-bit unsigned to signed int if needed
-                                d = (
-                                    stef_val
-                                    if stef_val < 0x80000000
-                                    else stef_val - 0x100000000
-                                )
-                                delay_sec = d
+                                delay_sec = _to_int32(stef_val)
             elif tuf_num == 4 and isinstance(tuf_val, int):
                 timestamp = tuf_val
             elif tuf_num == 5 and isinstance(tuf_val, int):
-                delay_sec = tuf_val if tuf_val < 0x80000000 else tuf_val - 0x100000000
+                delay_sec = _to_int32(tuf_val)
 
         record = TripUpdateRecord(
             entity_id=entity_id,

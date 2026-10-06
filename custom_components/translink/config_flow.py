@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -164,6 +165,8 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                             CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                         },
                     )
+            except AbortFlow:
+                raise
             except TranslinkApiError:
                 errors["base"] = "cannot_connect"
             except Exception:
@@ -232,6 +235,8 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                             CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                         },
                     )
+            except AbortFlow:
+                raise
             except TranslinkApiError:
                 errors["base"] = "cannot_connect"
             except Exception:
@@ -285,8 +290,15 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                         errors[CONF_END_NAME] = "location_not_found"
 
                     if not errors:
+                        new_unique_id = (
+                            f"journey_{start_res[0].LocationId}_{end_res[0].LocationId}"
+                        )
+                        if new_unique_id != self._reconfigure_entry.unique_id:
+                            await self.async_set_unique_id(new_unique_id)
+                            self._abort_if_unique_id_configured()
                         return self.async_update_reload_and_abort(
                             self._reconfigure_entry,
+                            unique_id=new_unique_id,
                             data={
                                 **current_data,
                                 CONF_START_LOCATION_ID: start_res[0].LocationId,
@@ -298,6 +310,8 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                                 ),
                             },
                         )
+                except AbortFlow:
+                    raise
                 except TranslinkApiError:
                     errors["base"] = "cannot_connect"
                 except Exception:
@@ -312,8 +326,13 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                     if not res:
                         errors[CONF_STOP_NAME] = "location_not_found"
                     else:
+                        new_unique_id = f"stop_{res[0].LocationId}"
+                        if new_unique_id != self._reconfigure_entry.unique_id:
+                            await self.async_set_unique_id(new_unique_id)
+                            self._abort_if_unique_id_configured()
                         return self.async_update_reload_and_abort(
                             self._reconfigure_entry,
+                            unique_id=new_unique_id,
                             data={
                                 **current_data,
                                 CONF_STOP_LOCATION_ID: res[0].LocationId,
@@ -323,6 +342,8 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
                                 ),
                             },
                         )
+                except AbortFlow:
+                    raise
                 except TranslinkApiError:
                     errors["base"] = "cannot_connect"
                 except Exception:

@@ -58,10 +58,13 @@ if [[ -d custom_components ]]; then
         if [[ -d "$dir" && ! -L "${dir%/}" ]]; then
             PACKAGE_NAME=$(basename "$dir")
             if pip show "$PACKAGE_NAME" >/dev/null 2>&1; then
-                if [[ $MINIMAL_MODE == false ]]; then
-                    log_step "Uninstalling accidentally installed package: $PACKAGE_NAME"
+                PKG_LOC=$(pip show "$PACKAGE_NAME" 2>/dev/null | grep -i "^Location:" | cut -d' ' -f2-)
+                if [[ -n "$PKG_LOC" && "$PKG_LOC" == *"$PWD"* ]]; then
+                    if [[ $MINIMAL_MODE == false ]]; then
+                        log_step "Uninstalling accidentally installed package: $PACKAGE_NAME"
+                    fi
+                    pip uninstall -y "$PACKAGE_NAME" >/dev/null 2>&1 || true
                 fi
-                pip uninstall -y "$PACKAGE_NAME" >/dev/null 2>&1 || true
             fi
         fi
     done < <(find custom_components -mindepth 1 -maxdepth 1 -type d -print0)

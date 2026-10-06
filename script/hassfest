@@ -119,7 +119,7 @@ else
         cd "$HA_CORE_DIR"
         if [ "$HA_VERSION_TAG" = "dev" ]; then
             git fetch --depth 1 --filter=blob:none origin dev >/dev/null 2>&1
-            git checkout dev >/dev/null 2>&1
+            git checkout -B dev origin/dev >/dev/null 2>&1
         else
             git fetch --depth 1 --filter=blob:none origin tag "$HA_VERSION_TAG" >/dev/null 2>&1
             git checkout "$HA_VERSION_TAG" >/dev/null 2>&1
