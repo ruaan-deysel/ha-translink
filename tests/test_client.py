@@ -18,6 +18,7 @@ from custom_components.translink.client import (
     JourneyPlanResult,
     JourneySummary,
     TranslinkClient,
+    TranslinkConnectionError,
     TranslinkResponseError,
     build_journey_summary,
     calculate_plan_hash,
@@ -381,3 +382,199 @@ def test_build_journey_summary_with_delay_and_vehicle(
     after_arr_now = arr_time + timedelta(minutes=5)
     summary_arrived = build_journey_summary(plan, now=after_arr_now)
     assert summary_arrived.status == "arrived"
+
+
+@pytest.mark.asyncio
+async def test_client_own_session_lifecycle() -> None:
+    """Test client handles creating its own session and closing cleanly."""
+    client = TranslinkClient()
+    session = await client._get_session()
+    assert not session.closed
+    await client.close()
+    assert client._session is None
+
+
+@pytest.mark.asyncio
+async def test_search_locations_short_query_and_errors() -> None:
+    """Test short queries, non-list responses, and client errors in search_locations."""
+    import aiohttp
+
+    client = TranslinkClient()
+    assert await client.search_locations("a") == []
+    assert await client.search_locations("") == []
+
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.json = AsyncMock(return_value={"error": "none"})
+    mock_session = MagicMock()
+    mock_session.get.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_session.get.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.closed = False
+    c = TranslinkClient(session=mock_session)
+    assert await c.search_locations("Central") == []
+
+    mock_session.get.side_effect = aiohttp.ClientError("Conn error")
+    with pytest.raises(TranslinkConnectionError):
+        await c.search_locations("Central")
+
+
+@pytest.mark.asyncio
+async def test_get_stops_by_geolocation_errors() -> None:
+    """Test non-200 responses, non-list payloads, and ClientError in get_stops_by_geolocation."""
+    import aiohttp
+
+    mock_resp = MagicMock()
+    mock_resp.status = 500
+    mock_resp.text = AsyncMock(return_value="Server error")
+    mock_session = MagicMock()
+    mock_session.get.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_session.get.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.closed = False
+    c = TranslinkClient(session=mock_session)
+
+    with pytest.raises(TranslinkResponseError):
+        await c.get_stops_by_geolocation(-27.46, 153.02)
+
+    mock_resp.status = 200
+    mock_resp.json = AsyncMock(return_value={"not": "a list"})
+    assert await c.get_stops_by_geolocation(-27.46, 153.02) == []
+
+    mock_session.get.side_effect = aiohttp.ClientError("Conn error")
+    with pytest.raises(TranslinkConnectionError):
+        await c.get_stops_by_geolocation(-27.46, 153.02)
+
+
+@pytest.mark.asyncio
+async def test_plan_journey_errors() -> None:
+    """Test plan_journey error branches."""
+    import aiohttp
+
+    mock_resp = MagicMock()
+    mock_resp.status = 400
+    mock_resp.text = AsyncMock(return_value="Bad Request")
+    mock_session = MagicMock()
+    mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.closed = False
+    c = TranslinkClient(session=mock_session)
+
+    with pytest.raises(TranslinkResponseError):
+        await c.plan_journey("S1", "Start", "S2", "End")
+
+    mock_session.post.side_effect = aiohttp.ClientError("Conn timeout")
+    with pytest.raises(TranslinkConnectionError):
+        await c.plan_journey("S1", "Start", "S2", "End")
+
+
+@pytest.mark.asyncio
+async def test_gtfs_fetch_errors_and_non_200() -> None:
+    """Test GTFS feeds error handling on non-200 and ClientError."""
+    import aiohttp
+
+    mock_resp = MagicMock()
+    mock_resp.status = 503
+    mock_session = MagicMock()
+    mock_session.get.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_session.get.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.closed = False
+    c = TranslinkClient(session=mock_session)
+
+    assert await c.fetch_vehicle_positions() == {}
+    assert await c.fetch_trip_updates() == {}
+    assert await c.fetch_alerts() == []
+
+    mock_session.get.side_effect = aiohttp.ClientError("Network drop")
+    assert await c.fetch_vehicle_positions() == {}
+    assert await c.fetch_trip_updates() == {}
+    assert await c.fetch_alerts() == []
+
+
+def test_build_journey_summary_edge_cases(plan_response_data: dict[str, Any]) -> None:
+    """Test on_time status, walk-only trip, concession fare, and platform coords fallback."""
+    from datetime import timedelta
+
+    plan = JourneyPlanResult.model_validate(plan_response_data)
+    dep_time = parse_iso_datetime(plan.itineraries[0].firstDepartureTimeUtc)
+    assert dep_time is not None
+    before_dep = dep_time - timedelta(minutes=10)
+
+    summary_on_time = build_journey_summary(plan, now=before_dep)
+    assert summary_on_time.status == "on_time"
+
+    # Walk-only itinerary
+    walk_plan_data = {
+        "itineraries": [
+            {
+                "durationMins": 10,
+                "firstDepartureTimeUtc": "2026-10-06T00:00:00Z",
+                "lastArrivalTimeUtc": "2026-10-06T00:10:00Z",
+                "legs": [
+                    {
+                        "travelMode": "Walk",
+                        "durationMins": 10,
+                        "distanceM": 800,
+                        "origin": {
+                            "name": "Start Point",
+                            "position": {"lat": -27.46, "lng": 153.02},
+                        },
+                        "destination": {"name": "End Point"},
+                        "notices": [],
+                    }
+                ],
+                "fares": [{"name": "Special Fare", "type": "Other", "price": 4.50}],
+            }
+        ]
+    }
+    walk_plan = JourneyPlanResult.model_validate(walk_plan_data)
+    walk_summary = build_journey_summary(
+        walk_plan, fare_preference="Adult", now=before_dep
+    )
+    assert walk_summary.next_service_name == "Walk"
+    assert walk_summary.fare_price == 4.50
+    assert walk_summary.vehicle_latitude == -27.46
+    assert walk_summary.vehicle_longitude == 153.02
+
+    # Concession fare
+    concession_summary = build_journey_summary(
+        plan, fare_preference="Concession", now=before_dep
+    )
+    assert concession_summary.fare_price == 0.50
+
+    # No legs plan
+    no_legs_plan = JourneyPlanResult.model_validate(
+        {"itineraries": [{"durationMins": 0, "legs": []}]}
+    )
+    no_legs_sum = build_journey_summary(no_legs_plan)
+    assert no_legs_sum.transfers == 0
+
+    # Plan with legs having no origin, destination, or departure time
+    no_dep_plan = JourneyPlanResult.model_validate(
+        {
+            "itineraries": [
+                {
+                    "durationMins": 10,
+                    "legs": [
+                        {
+                            "travelMode": "Bus",
+                            "durationMins": 10,
+                            "distanceM": 1000,
+                            "origin": None,
+                            "destination": None,
+                            "notices": [],
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+    no_dep_sum = build_journey_summary(no_dep_plan)
+    assert no_dep_sum.status == "scheduled"
+
+
+@pytest.mark.asyncio
+async def test_client_close_unowned_session() -> None:
+    """Test client close does nothing when session is not owned."""
+    mock_session = MagicMock(closed=False)
+    c = TranslinkClient(session=mock_session)
+    await c.close()
+    mock_session.close.assert_not_called()

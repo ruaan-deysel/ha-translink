@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -11,8 +11,10 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.translink.client import (
     JourneyPlanResult,
     LocationSearchResult,
+    TranslinkApiError,
     TranslinkConnectionError,
 )
+from custom_components.translink.config_flow import TranslinkConfigFlow
 from custom_components.translink.const import (
     CONF_END_NAME,
     CONF_MODE,
@@ -471,3 +473,99 @@ async def test_step_reconfigure_stop_cannot_connect(hass: HomeAssistant) -> None
 
     assert result2["type"] is FlowResultType.FORM
     assert result2["errors"]["base"] == "cannot_connect"
+
+
+async def test_step_stop_api_error(hass: HomeAssistant) -> None:
+    """Test TranslinkApiError in stop step."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    result2 = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_MODE: MODE_STOP},
+    )
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=TranslinkApiError("API error"),
+        ),
+    ):
+        result3 = await hass.config_entries.flow.async_configure(
+            result2["flow_id"],
+            {CONF_NAME: "Stop", CONF_STOP_NAME: "Station"},
+        )
+    assert result3["type"] is FlowResultType.FORM
+    assert result3["errors"]["base"] == "cannot_connect"
+
+
+async def test_step_reconfigure_no_entry_aborts(hass: HomeAssistant) -> None:
+    """Test reconfigure aborts cleanly if no reconfigure entry is found."""
+    flow = TranslinkConfigFlow()
+    flow.hass = hass
+    flow._get_reconfigure_entry = MagicMock(return_value=None)  # type: ignore[method-assign]
+    result = await flow.async_step_reconfigure()
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+
+
+async def test_step_reconfigure_journey_location_not_found(
+    hass: HomeAssistant,
+) -> None:
+    """Test reconfigure journey sets error when locations not found."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="journey_reconfig_not_found",
+        data={
+            CONF_MODE: MODE_JOURNEY,
+            CONF_NAME: "My Journey",
+            CONF_START_NAME: "Central",
+            CONF_END_NAME: "Springfield",
+        },
+    )
+    entry.add_to_hass(hass)
+    result = await entry.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            side_effect=[[], []],
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_START_NAME: "Bad Start", CONF_END_NAME: "Bad End"},
+        )
+    assert result2["type"] is FlowResultType.FORM
+    assert result2["errors"][CONF_START_NAME] == "location_not_found"
+    assert result2["errors"][CONF_END_NAME] == "location_not_found"
+
+
+async def test_step_reconfigure_stop_location_not_found(
+    hass: HomeAssistant,
+) -> None:
+    """Test reconfigure stop sets error when stop not found."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="stop_reconfig_not_found",
+        data={
+            CONF_MODE: MODE_STOP,
+            CONF_NAME: "My Stop",
+            CONF_STOP_NAME: "Roma Street",
+        },
+    )
+    entry.add_to_hass(hass)
+    result = await entry.start_reconfigure_flow(hass)
+    with (
+        patch("custom_components.translink.config_flow.async_get_clientsession"),
+        patch(
+            "custom_components.translink.client.TranslinkClient.search_locations",
+            return_value=[],
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_STOP_NAME: "Bad Stop"},
+        )
+    assert result2["type"] is FlowResultType.FORM
+    assert result2["errors"][CONF_STOP_NAME] == "location_not_found"

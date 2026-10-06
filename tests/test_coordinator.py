@@ -170,3 +170,81 @@ async def test_coordinator_shutdown(
     coordinator.client.close = AsyncMock()
     await coordinator.async_shutdown()
     coordinator.client.close.assert_awaited_once()
+
+
+async def test_coordinator_update_journey_without_vehicle_tracking(
+    hass: HomeAssistant,
+    plan_response_data: dict[str, Any],
+) -> None:
+    """Test coordinator update with vehicle tracking disabled."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        entry_id="entry_no_track",
+        data={
+            CONF_MODE: MODE_JOURNEY,
+            CONF_NAME: "Commute",
+            CONF_START_LOCATION_ID: "ST:place_censta",
+            CONF_END_LOCATION_ID: "ST:place_spcsta",
+        },
+        options={"track_vehicle": False},
+    )
+    entry.add_to_hass(hass)
+    plan_result = JourneyPlanResult.model_validate(plan_response_data)
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, entry)
+
+    coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
+    coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
+    coordinator._store.async_save = AsyncMock()
+
+    summary = await coordinator._async_update_data()
+    assert isinstance(summary, JourneySummary)
+
+
+async def test_coordinator_update_unexpected_exception(
+    hass: HomeAssistant,
+    journey_entry: MockConfigEntry,
+) -> None:
+    """Test coordinator catches unexpected non-API exceptions and wraps as UpdateFailed."""
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, journey_entry)
+
+    coordinator.client.plan_journey = AsyncMock(
+        side_effect=RuntimeError("System crash")
+    )
+    coordinator.client.fetch_vehicle_positions = AsyncMock(return_value={})
+    coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
+
+    with pytest.raises(UpdateFailed):
+        await coordinator._async_update_data()
+
+
+async def test_coordinator_update_journey_plan_fallback(
+    hass: HomeAssistant,
+    journey_entry: MockConfigEntry,
+) -> None:
+    """Test coordinator update when plan_journey returns non-JourneyPlanResult."""
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, journey_entry)
+
+    coordinator.client.plan_journey = AsyncMock(return_value=None)
+    coordinator.client.fetch_vehicle_positions = AsyncMock(return_value={})
+    coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
+    coordinator._store.async_save = AsyncMock()
+
+    summary = await coordinator._async_update_data()
+    assert isinstance(summary, JourneySummary)
+    assert summary.status == "no_service"
+
+
+async def test_coordinator_save_cache_error(
+    hass: HomeAssistant,
+    journey_entry: MockConfigEntry,
+) -> None:
+    """Test coordinator logs and catches cache persistence errors."""
+    with patch("custom_components.translink.coordinator.async_get_clientsession"):
+        coordinator = TranslinkCoordinator(hass, journey_entry)
+
+    coordinator._store.async_save = AsyncMock(side_effect=OSError("Disk full"))
+    # Should not raise
+    await coordinator._async_save_cache({"test": "data"})
