@@ -16,7 +16,12 @@ class FakeEntry:
 
     def __init__(self) -> None:
         self.entry_id = "entry_1"
-        self.data = {"start_name": "Central", "end_name": "Springfield"}
+        self.data = {
+            "start_name": "Central",
+            "end_name": "Springfield",
+            "origin_latitude": -27.466,
+            "origin_longitude": 153.028,
+        }
         self.options = {"scan_interval": 60}
         self.runtime_data = None
 
@@ -48,5 +53,7 @@ async def test_diagnostics_output() -> None:
     assert "options" in diagnostics
     assert "data" in diagnostics
     assert diagnostics["entry"]["start_name"] == "Central"
+    assert diagnostics["entry"]["origin_latitude"] == "**REDACTED**"
+    assert diagnostics["entry"]["origin_longitude"] == "**REDACTED**"
     assert diagnostics["data"]["duration_mins"] == 41
     assert diagnostics["data"]["status"] == "on_time"

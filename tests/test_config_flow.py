@@ -506,7 +506,7 @@ async def test_step_reconfigure_no_entry_aborts(hass: HomeAssistant) -> None:
     flow._get_reconfigure_entry = MagicMock(return_value=None)  # type: ignore[method-assign]
     result = await flow.async_step_reconfigure()
     assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "reconfigure_successful"
+    assert result["reason"] == "reconfigure_failed"
 
 
 async def test_step_reconfigure_journey_location_not_found(

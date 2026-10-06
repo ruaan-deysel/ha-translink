@@ -253,6 +253,7 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
             start_location_id=stop_id,
             start_name=stop_name,
             end_location_id="ST:place_censta",  # reference hub
+            end_name="Central Station",
             transport_modes=self.transport_modes,
             time_search_mode="LeaveAfter",
             max_walking_distance=self.max_walking_distance,

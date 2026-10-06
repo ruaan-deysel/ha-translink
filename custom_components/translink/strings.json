@@ -61,7 +61,8 @@
     },
     "abort": {
       "already_configured": "This Translink journey or stop is already configured",
-      "reconfigure_successful": "Reconfiguration was successful"
+      "reconfigure_successful": "Reconfiguration was successful",
+      "reconfigure_failed": "Reconfiguration failed because the config entry could not be found"
     }
   },
   "options": {

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Query key read-only GloBird API endpoints.
+"""Query Translink Queensland API endpoints and GTFS-Realtime feeds.
 
 Usage:
-    ./script/query-api --email user@example.com --password 'secret'
+    ./script/query-api --search "Central"
+    ./script/query-api --plan --start "Central" --end "Springfield"
+    ./script/query-api --trip-updates
+    ./script/query-api --vehicles
 """
 
 from __future__ import annotations
@@ -17,42 +20,50 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
-def _compact(payload: dict[str, Any] | None) -> str:
+def _compact(payload: Any) -> str:
     if payload is None:
         return "null"
+    if hasattr(payload, "model_dump"):
+        return json.dumps(payload.model_dump(mode="json"), indent=2, default=str)[:5000]
     return json.dumps(payload, indent=2, default=str)[:5000]
 
 
-async def run_query(email: str, password: str) -> int:
-    from custom_components.translink.client import (
-        GloBirdClient,
-        extract_accounts_and_services,
-    )
+async def run_query(args: argparse.Namespace) -> int:
+    from custom_components.translink.client import TranslinkClient
 
-    client = GloBirdClient()
+    client = TranslinkClient()
     try:
-        current_user = await client.authenticate(email, password)
-        print("# current_user")
-        print(_compact(current_user))
+        if args.search:
+            print(f"# Location search: {args.search}")
+            results = await client.search_locations(args.search)
+            print(_compact([r.model_dump(mode="json") for r in results]))
 
-        accounts, services = extract_accounts_and_services(current_user)
-        account_id = (
-            services[0].get("accountId")
-            if services
-            else (accounts[0].get("accountId") if accounts else None)
-        )
+        if args.plan:
+            start = args.start or "Central"
+            end = args.end or "Roma Street"
+            print(f"# Planning journey: {start} -> {end}")
+            locs_start = await client.search_locations(start)
+            locs_end = await client.search_locations(end)
+            if not locs_start or not locs_end:
+                print("Could not resolve start or end location.")
+                return 1
+            plan = await client.plan_journey(
+                start_location_id=locs_start[0].id,
+                start_name=locs_start[0].name,
+                end_location_id=locs_end[0].id,
+                end_name=locs_end[0].name,
+            )
+            print(_compact(plan))
 
-        dashboard = await client.get_dashboard(account_id=account_id)
-        print("\n# dashboard")
-        print(_compact(dashboard))
+        if args.trip_updates:
+            print("# Fetching GTFS-RT Trip Updates")
+            tu = await client.fetch_trip_updates()
+            print(f"Entities: {len(tu.entities)}, Timestamp: {tu.header_timestamp}")
 
-        balance = await client.get_balance(account_id=account_id)
-        print("\n# balance")
-        print(_compact(balance))
-
-        signup_info = await client.get_signup_info(account_id=account_id)
-        print("\n# signup_info")
-        print(_compact(signup_info))
+        if args.vehicles:
+            print("# Fetching GTFS-RT Vehicle Positions")
+            vp = await client.fetch_vehicle_positions()
+            print(f"Entities: {len(vp.entities)}, Timestamp: {vp.header_timestamp}")
 
         return 0
     except Exception as err:  # noqa: BLE001 - CLI should print actionable error.
@@ -63,11 +74,24 @@ async def run_query(email: str, password: str) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Query key GloBird API endpoints")
-    parser.add_argument("--email", required=True, help="Portal account email")
-    parser.add_argument("--password", required=True, help="Portal account password")
+    parser = argparse.ArgumentParser(description="Query Translink Queensland APIs")
+    parser.add_argument("--search", help="Search for a stop, station, or landmark")
+    parser.add_argument("--plan", action="store_true", help="Plan a journey")
+    parser.add_argument("--start", help="Journey starting location name")
+    parser.add_argument("--end", help="Journey destination name")
+    parser.add_argument(
+        "--trip-updates", action="store_true", help="Fetch GTFS trip updates"
+    )
+    parser.add_argument(
+        "--vehicles", action="store_true", help="Fetch GTFS vehicle positions"
+    )
     args = parser.parse_args()
-    return asyncio.run(run_query(args.email, args.password))
+
+    if not any([args.search, args.plan, args.trip_updates, args.vehicles]):
+        parser.print_help()
+        return 0
+
+    return asyncio.run(run_query(args))
 
 
 if __name__ == "__main__":

@@ -69,14 +69,35 @@ def parse_iso_datetime(value: str | None) -> datetime | None:
     try:
         dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
         return dt.astimezone(UTC)
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         return None
+
+
+SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "latitude",
+        "longitude",
+        "origin_latitude",
+        "origin_longitude",
+        "destination_latitude",
+        "destination_longitude",
+        "lat",
+        "lng",
+        "api_key",
+        "token",
+        "password",
+        "secret",
+    }
+)
 
 
 def redact_sensitive(data: Any) -> Any:
     """Recursively redact sensitive data for diagnostics."""
     if isinstance(data, dict):
-        return {k: redact_sensitive(v) for k, v in data.items()}
+        return {
+            k: "**REDACTED**" if str(k).lower() in SENSITIVE_KEYS else redact_sensitive(v)
+            for k, v in data.items()
+        }
     if isinstance(data, list):
         return [redact_sensitive(item) for item in data]
     return data
@@ -176,7 +197,7 @@ class TranslinkClient:
         start_location_id: str,
         start_name: str,
         end_location_id: str,
-        end_name: str,
+        end_name: str = "",
         transport_modes: list[str] | None = None,
         time_search_mode: str = "LeaveAfter",
         max_walking_distance: int = 4000,

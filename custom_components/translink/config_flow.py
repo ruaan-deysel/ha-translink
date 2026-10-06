@@ -263,7 +263,7 @@ class TranslinkConfigFlow(  # pyright: ignore[reportGeneralTypeIssues, reportCal
         """Handle reconfiguration of an existing entry."""
         self._reconfigure_entry = self._get_reconfigure_entry()
         if self._reconfigure_entry is None:
-            return self.async_abort(reason="reconfigure_successful")
+            return self.async_abort(reason="reconfigure_failed")
         current_data = self._reconfigure_entry.data
         mode = current_data.get(CONF_MODE, MODE_JOURNEY)
 
