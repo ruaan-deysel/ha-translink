@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 type TranslinkConfigEntry = ConfigEntry[TranslinkCoordinator]
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.DEVICE_TRACKER]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.DEVICE_TRACKER, Platform.EVENT]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: TranslinkConfigEntry) -> bool:

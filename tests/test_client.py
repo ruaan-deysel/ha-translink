@@ -625,3 +625,92 @@ async def test_plan_journey_validation_error() -> None:
             end_location_id="ST:2",
             end_name="End",
         )
+
+
+def test_build_journey_summary_disruptions_enriched() -> None:
+    """Test disruption notice resolution with PlanNotice matching and formatted descriptions."""
+    plan_data = {
+        "itineraries": [
+            {
+                "durationMins": 30,
+                "legs": [
+                    {
+                        "travelMode": "Train",
+                        "durationMins": 30,
+                        "distanceM": 15000,
+                        "notices": [
+                            {"id": 101, "severity": "Major"},
+                            {"id": 102, "severity": "Informative"},
+                            {"id": None, "severity": "Minor"},
+                        ],
+                    }
+                ],
+            }
+        ],
+        "notices": [
+            {
+                "id": 101,
+                "title": "Trackwork",
+                "description": "Buses replace trains.",
+                "cause": "MAINTENANCE",
+                "effect": "NO_SERVICE",
+                "startsUtc": "2026-10-06T00:00:00Z",
+                "endsUtc": "2026-10-06T12:00:00Z",
+            },
+            {
+                "id": 102,
+                "title": "Delays Expected",
+                "description": None,
+                "cause": "WEATHER",
+                "effect": "SIGNIFICANT_DELAYS",
+            },
+        ],
+    }
+    plan = JourneyPlanResult.model_validate(plan_data)
+    summary = build_journey_summary(plan)
+
+    assert summary.disruptions_count == 2
+    assert summary.disruptions_summary == "Trackwork; Delays Expected"
+    assert "• Trackwork: Buses replace trains." in summary.disruptions_description
+    assert "Delays Expected" in summary.disruptions_description
+    assert summary.latest_disruption_title == "Trackwork"
+    assert summary.latest_disruption_description == "Buses replace trains."
+
+
+def test_build_journey_summary_top_level_notices_fallback() -> None:
+    """Test top-level plan notices fallback when itinerary legs have no notices."""
+    plan_data = {
+        "itineraries": [
+            {
+                "durationMins": 20,
+                "legs": [
+                    {
+                        "travelMode": "Bus",
+                        "durationMins": 20,
+                        "distanceM": 5000,
+                        "notices": [],
+                    }
+                ],
+            }
+        ],
+        "notices": [
+            {
+                "id": 201,
+                "title": "General Alert",
+                "description": "Service adjustments across the network.",
+                "cause": "OTHER_CAUSE",
+                "effect": "MODIFIED_SERVICE",
+            },
+            {
+                "id": None,
+                "title": "Unnamed Notice",
+            },
+        ],
+    }
+    plan = JourneyPlanResult.model_validate(plan_data)
+    summary = build_journey_summary(plan)
+
+    assert summary.disruptions_count == 1
+    assert summary.disruptions[0]["title"] == "General Alert"
+    assert summary.disruptions_summary == "General Alert"
+    assert summary.latest_disruption_title == "General Alert"

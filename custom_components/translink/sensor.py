@@ -149,6 +149,24 @@ JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
         value_fn=lambda data: data.disruptions_count,
         attributes_fn=lambda data: {
             "disruptions": data.disruptions,
+            "description": data.disruptions_description,
+            "summary": data.disruptions_summary,
+            "latest_title": data.latest_disruption_title,
+            "latest_description": data.latest_disruption_description,
+        },
+    ),
+    TranslinkSensorEntityDescription(
+        key="disruption_description",
+        translation_key="disruption_description",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: (
+            data.latest_disruption_title
+            or ("Normal" if not data.disruptions_count else "Service Disruption")
+        )[:255],
+        attributes_fn=lambda data: {
+            "description": data.disruptions_description,
+            "count": data.disruptions_count,
+            "disruptions": data.disruptions,
         },
     ),
     TranslinkSensorEntityDescription(
@@ -209,6 +227,24 @@ STOP_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.disruptions_count,
         attributes_fn=lambda data: {
+            "disruptions": data.disruptions,
+            "description": data.disruptions_description,
+            "summary": data.disruptions_summary,
+            "latest_title": data.latest_disruption_title,
+            "latest_description": data.latest_disruption_description,
+        },
+    ),
+    TranslinkSensorEntityDescription(
+        key="disruption_description",
+        translation_key="disruption_description",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: (
+            data.latest_disruption_title
+            or ("Normal" if not data.disruptions_count else "Service Disruption")
+        )[:255],
+        attributes_fn=lambda data: {
+            "description": data.disruptions_description,
+            "count": data.disruptions_count,
             "disruptions": data.disruptions,
         },
     ),

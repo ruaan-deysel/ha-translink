@@ -294,6 +294,10 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
             departures=departures,
             disruptions_count=journey_summary.disruptions_count,
             disruptions=journey_summary.disruptions,
+            disruptions_description=journey_summary.disruptions_description,
+            disruptions_summary=journey_summary.disruptions_summary,
+            latest_disruption_title=journey_summary.latest_disruption_title,
+            latest_disruption_description=journey_summary.latest_disruption_description,
             last_updated=journey_summary.last_updated,
         )
 

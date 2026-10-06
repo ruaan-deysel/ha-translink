@@ -42,6 +42,9 @@
       "disruptions": {
         "default": "mdi:alert"
       },
+      "disruption_description": {
+        "default": "mdi:alert-box-outline"
+      },
       "itinerary": {
         "default": "mdi:routes"
       },
@@ -52,6 +55,15 @@
     "device_tracker": {
       "vehicle_tracker": {
         "default": "mdi:bus-marker"
+      }
+    },
+    "event": {
+      "disruption": {
+        "default": "mdi:alert-circle-outline",
+        "state": {
+          "disruption": "mdi:alert",
+          "cleared": "mdi:check-circle-outline"
+        }
       }
     }
   }

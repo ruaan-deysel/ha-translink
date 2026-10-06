@@ -489,18 +489,68 @@ def build_journey_summary(
         veh_lat = primary_leg.origin.position.lat
         veh_lng = primary_leg.origin.position.lng
 
+    # Map notices by id from plan.notices
+    notice_lookup = {str(n.id): n for n in plan.notices if n.id is not None}
+
     # Aggregate disruptions
     disruptions: list[dict[str, Any]] = []
+    seen_notice_ids: set[str] = set()
     for leg in itinerary.legs:
         for notice in leg.notices:
-            disruptions.append(
-                {
-                    "id": notice.id,
-                    "severity": notice.severity,
-                    "leg": leg.travelMode,
-                    "route": leg.legRoute.name if leg.legRoute else None,
-                }
-            )
+            nid = str(notice.id) if notice.id is not None else None
+            if nid and nid not in seen_notice_ids:
+                seen_notice_ids.add(nid)
+                detail = notice_lookup.get(nid)
+                disruptions.append(
+                    {
+                        "id": notice.id,
+                        "title": detail.title if detail else None,
+                        "description": detail.description if detail else None,
+                        "cause": detail.cause if detail else None,
+                        "effect": detail.effect if detail else None,
+                        "severity": notice.severity,
+                        "starts_utc": detail.startsUtc if detail else None,
+                        "ends_utc": detail.endsUtc if detail else None,
+                        "leg": leg.travelMode,
+                        "route": leg.legRoute.name if leg.legRoute else None,
+                    }
+                )
+
+    if not disruptions and plan.notices:
+        for n in plan.notices:
+            nid = str(n.id) if n.id is not None else None
+            if nid and nid not in seen_notice_ids:
+                seen_notice_ids.add(nid)
+                disruptions.append(
+                    {
+                        "id": n.id,
+                        "title": n.title,
+                        "description": n.description,
+                        "cause": n.cause,
+                        "effect": n.effect,
+                        "severity": "Informative",
+                        "starts_utc": n.startsUtc,
+                        "ends_utc": n.endsUtc,
+                        "leg": None,
+                        "route": None,
+                    }
+                )
+
+    titles = [str(d["title"]) for d in disruptions if d.get("title")]
+    descriptions = [str(d["description"]) for d in disruptions if d.get("description")]
+    disruptions_summary = "; ".join(titles) if titles else "Normal"
+    disruptions_description = (
+        "\n".join(
+            f"• {d['title']}: {d['description']}"
+            if d.get("title") and d.get("description")
+            else str(d.get("title") or d.get("description") or "Disruption")
+            for d in disruptions
+        )
+        if disruptions
+        else "No active disruptions"
+    )
+    latest_disruption_title = titles[0] if titles else None
+    latest_disruption_description = descriptions[0] if descriptions else None
 
     # Detailed legs representation
     legs_summary: list[dict[str, Any]] = []
@@ -551,6 +601,10 @@ def build_journey_summary(
         delay_mins=delay_mins,
         disruptions_count=len(disruptions),
         disruptions=disruptions,
+        disruptions_description=disruptions_description,
+        disruptions_summary=disruptions_summary,
+        latest_disruption_title=latest_disruption_title,
+        latest_disruption_description=latest_disruption_description,
         trip_id=trip_id,
         vehicle_id=veh_id,
         vehicle_label=veh_label,

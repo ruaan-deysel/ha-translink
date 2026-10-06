@@ -160,10 +160,23 @@ class JourneyItinerary(TranslinkApiModel):
     legs: list[JourneyLeg] = Field(default_factory=list)
 
 
+class PlanNotice(TranslinkApiModel):
+    """Notice or disruption details from Journey Planner."""
+
+    id: int | str | None = None
+    title: str | None = None
+    description: str | None = None
+    cause: str | None = None
+    effect: str | None = None
+    startsUtc: str | None = None
+    endsUtc: str | None = None
+
+
 class JourneyPlanResult(TranslinkApiModel):
     """Response from /api/plan."""
 
     itineraries: list[JourneyItinerary] = Field(default_factory=list)
+    notices: list[PlanNotice] = Field(default_factory=list)
 
 
 class JourneySummary(TranslinkApiModel):
@@ -192,6 +205,10 @@ class JourneySummary(TranslinkApiModel):
     delay_mins: int = 0
     disruptions_count: int = 0
     disruptions: list[dict[str, Any]] = Field(default_factory=list)
+    disruptions_description: str = "No active disruptions"
+    disruptions_summary: str = "Normal"
+    latest_disruption_title: str | None = None
+    latest_disruption_description: str | None = None
     trip_id: str | None = None
     vehicle_id: str | None = None
     vehicle_label: str | None = None
@@ -235,4 +252,8 @@ class StopSummary(TranslinkApiModel):
     departures: list[dict[str, Any]] = Field(default_factory=list)
     disruptions_count: int = 0
     disruptions: list[dict[str, Any]] = Field(default_factory=list)
+    disruptions_description: str = "No active disruptions"
+    disruptions_summary: str = "Normal"
+    latest_disruption_title: str | None = None
+    latest_disruption_description: str | None = None
     last_updated: datetime | None = None

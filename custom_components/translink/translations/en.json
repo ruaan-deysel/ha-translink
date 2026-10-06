@@ -132,6 +132,9 @@
       "disruptions": {
         "name": "Disruptions"
       },
+      "disruption_description": {
+        "name": "Disruption Description"
+      },
       "itinerary": {
         "name": "Itinerary"
       },
@@ -142,6 +145,19 @@
     "device_tracker": {
       "vehicle_tracker": {
         "name": "Live Vehicle"
+      }
+    },
+    "event": {
+      "disruption": {
+        "name": "Disruption",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "disruption": "Disruption",
+              "cleared": "Cleared"
+            }
+          }
+        }
       }
     }
   }

@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 This project uses Home Assistant's calendar versioning scheme (`YYYY.M.P`, for example `2026.10.0`).
 
+## [2026.10.1] - 2026-10-06
+
+### Added
+- **Disruption Event Entity (`event.<entry>_disruption`)**:
+  - Implements Home Assistant's native `event` entity platform (`EventEntity`) for service disruption alerts.
+  - Fires `disruption` events containing full incident attributes (`title`, `description`, `cause`, `effect`, `severity`, `route`, and notice list) whenever disruptions are detected or updated.
+  - Fires `cleared` events when service returns to normal, enabling instant automation triggers and smartphone push notifications.
+- **Disruption Description Sensor (`sensor.<entry>_disruption_description`)**:
+  - Diagnostic text sensor displaying the active disruption headline (or `Normal` when clear) directly on dashboards and glance cards.
+  - Includes multi-line formatted summary and details in entity extra state attributes.
+- **Enriched Disruption Sensor Attributes**:
+  - `sensor.<entry>_disruptions` now provides `summary`, `description`, `latest_title`, `latest_description`, and structured disruption notice lists in addition to notice counts.
+- **Comprehensive Notice Mapping**:
+  - Added notice extraction and cross-referencing between itinerary legs and Translink notice feeds in `TranslinkApiClient`.
+
 ## [2026.10.0] - 2026-10-06
 
 ### Added

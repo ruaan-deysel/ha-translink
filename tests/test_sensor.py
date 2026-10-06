@@ -149,6 +149,17 @@ def test_journey_sensor_properties(sample_journey_summary: JourneySummary) -> No
     assert sensors["delay"].native_value == 1
     assert sensors["walking_distance"].native_value == 120
     assert sensors["disruptions"].native_value == 0
+    assert sensors["disruption_description"].native_value == "Normal"
+
+    # Extra state attributes
+    disruption_attrs = sensors["disruptions"].extra_state_attributes
+    assert disruption_attrs["summary"] == "Normal"
+    assert disruption_attrs["description"] == "No active disruptions"
+    assert disruption_attrs["latest_title"] is None
+
+    desc_attrs = sensors["disruption_description"].extra_state_attributes
+    assert desc_attrs["count"] == 0
+    assert desc_attrs["description"] == "No active disruptions"
 
     # Extra state attributes
     attrs = sensors["next_departure"].extra_state_attributes
@@ -163,6 +174,59 @@ def test_journey_sensor_properties(sample_journey_summary: JourneySummary) -> No
     sample_journey_summary.departure_time = None
     attrs_none = sensors["next_departure"].extra_state_attributes
     assert attrs_none["readable_time"] is None
+
+
+def test_stop_sensor_properties(sample_stop_summary: StopSummary) -> None:
+    """Test values and attributes for stop departure sensors."""
+    sample_stop_summary.disruptions_count = 1
+    sample_stop_summary.disruptions = [
+        {"id": 1, "title": "Lift Maintenance", "description": "Platform 3 lift closed."}
+    ]
+    sample_stop_summary.disruptions_summary = "Lift Maintenance"
+    sample_stop_summary.disruptions_description = (
+        "• Lift Maintenance: Platform 3 lift closed."
+    )
+    sample_stop_summary.latest_disruption_title = "Lift Maintenance"
+    sample_stop_summary.latest_disruption_description = "Platform 3 lift closed."
+
+    coordinator = FakeCoordinator(mode=MODE_STOP, data=sample_stop_summary)
+    entry = FakeEntry(mode=MODE_STOP)
+
+    sensors = {
+        desc.key: TranslinkSensor(coordinator, desc, entry)  # type: ignore[arg-type]
+        for desc in STOP_SENSORS
+    }
+
+    assert sensors["disruptions"].native_value == 1
+    assert sensors["disruption_description"].native_value == "Lift Maintenance"
+
+    disruption_attrs = sensors["disruptions"].extra_state_attributes
+    assert disruption_attrs["summary"] == "Lift Maintenance"
+    assert (
+        disruption_attrs["description"] == "• Lift Maintenance: Platform 3 lift closed."
+    )
+    assert disruption_attrs["latest_title"] == "Lift Maintenance"
+
+    desc_attrs = sensors["disruption_description"].extra_state_attributes
+    assert desc_attrs["count"] == 1
+    assert desc_attrs["description"] == "• Lift Maintenance: Platform 3 lift closed."
+
+
+def test_sensor_fallback_disruption_description() -> None:
+    """Test disruption_description sensor fallback when count > 0 but no title."""
+    summary = JourneySummary(
+        disruptions_count=1,
+        disruptions=[{"id": 99}],
+        latest_disruption_title=None,
+    )
+    coordinator = FakeCoordinator(mode=MODE_JOURNEY, data=summary)
+    entry = FakeEntry(mode=MODE_JOURNEY)
+
+    sensors = {
+        desc.key: TranslinkSensor(coordinator, desc, entry)  # type: ignore[arg-type]
+        for desc in JOURNEY_SENSORS
+    }
+    assert sensors["disruption_description"].native_value == "Service Disruption"
 
 
 def test_sensor_none_data() -> None:
