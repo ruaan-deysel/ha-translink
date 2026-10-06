@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 This project uses Home Assistant's calendar versioning scheme (`YYYY.M.P`, for example `2026.10.0`).
 
+## [2026.10.2] - 2026-10-06
+
+### Fixed
+- **Platform Sensor Icon**:
+  - Replaced invalid non-existent icon string `mdi:train-car-platform` with valid Home Assistant core standard icon `mdi:bus-stop-uncovered`.
+  - Added explicit `icon="mdi:bus-stop-uncovered"` attribute to `platform` entity descriptions in both Journey and Stop departure sensors.
+
 ## [2026.10.1] - 2026-10-06
 
 ### Added

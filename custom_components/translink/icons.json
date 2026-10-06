@@ -25,7 +25,7 @@
         "default": "mdi:train-bus"
       },
       "platform": {
-        "default": "mdi:train-car-platform"
+        "default": "mdi:bus-stop-uncovered"
       },
       "transfers": {
         "default": "mdi:transit-transfer"

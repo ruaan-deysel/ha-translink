@@ -144,6 +144,7 @@ def test_journey_sensor_properties(sample_journey_summary: JourneySummary) -> No
     assert sensors["status"].native_value == "on_time"
     assert sensors["next_service"].native_value == "T2 Springfield Central (Train)"
     assert sensors["platform"].native_value == "5"
+    assert sensors["platform"].icon == "mdi:bus-stop-uncovered"
     assert sensors["transfers"].native_value == 0
     assert sensors["fare"].native_value == 0.5
     assert sensors["delay"].native_value == 1
@@ -197,6 +198,8 @@ def test_stop_sensor_properties(sample_stop_summary: StopSummary) -> None:
         for desc in STOP_SENSORS
     }
 
+    assert sensors["platform"].native_value == "3"
+    assert sensors["platform"].icon == "mdi:bus-stop-uncovered"
     assert sensors["disruptions"].native_value == 1
     assert sensors["disruption_description"].native_value == "Lift Maintenance"
 

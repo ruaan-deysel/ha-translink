@@ -96,3 +96,20 @@ async def test_async_unload_entry_failure(hass: HomeAssistant) -> None:
 
     assert result is False
     assert entry.entry_id in hass.data[DOMAIN]
+
+
+def test_icons_json_validity() -> None:
+    """Test that icons.json loads and contains correct platform icon."""
+    import json
+    from pathlib import Path
+
+    icons_file = (
+        Path(__file__).parent.parent / "custom_components" / "translink" / "icons.json"
+    )
+    assert icons_file.is_file()
+
+    with icons_file.open() as fp:
+        icons_data = json.load(fp)
+
+    sensor_icons = icons_data.get("entity", {}).get("sensor", {})
+    assert sensor_icons.get("platform", {}).get("default") == "mdi:bus-stop-uncovered"

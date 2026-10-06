@@ -108,6 +108,7 @@ JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
     TranslinkSensorEntityDescription(
         key="platform",
         translation_key="platform",
+        icon="mdi:bus-stop-uncovered",
         value_fn=lambda data: data.origin_platform or "N/A",
     ),
     TranslinkSensorEntityDescription(
@@ -211,6 +212,7 @@ STOP_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
     TranslinkSensorEntityDescription(
         key="platform",
         translation_key="platform",
+        icon="mdi:bus-stop-uncovered",
         value_fn=lambda data: data.next_platform or "N/A",
     ),
     TranslinkSensorEntityDescription(
