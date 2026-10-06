@@ -21,7 +21,7 @@ It brings the complete real-time experience of the official Translink app into H
   - **Ferries**: CityCat, CityHopper, and Cross River Ferries across the Brisbane River.
   - **Trams / Light Rail**: G:link (Gold Coast Light Rail).
 - **Regional Queensland**:
-  - Cairns, Mackay, Toowoomba, Sunshine Coast, Bowen, and regional urban bus networks.
+  - Journey Planner mode supports regional urban networks (Cairns, Mackay, Toowoomba, Sunshine Coast, Bowen, etc.). Departure Board mode is optimized for South East Queensland transit stations.
 
 ---
 

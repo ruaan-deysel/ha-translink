@@ -9,7 +9,7 @@
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/ruaan-deysel/ha-translink/issues",
-  "quality_scale": "platinum",
+  "quality_scale": "gold",
   "requirements": [
     "pydantic>=2.0.0"
   ],

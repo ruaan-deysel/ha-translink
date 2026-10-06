@@ -83,4 +83,4 @@ rules:
     status: exempt
     comment: Async API client is bundled directly with this HACS integration.
   inject-websession: done
-  strict-typing: done
+  strict-typing: todo
