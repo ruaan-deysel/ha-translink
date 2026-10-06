@@ -303,7 +303,7 @@ def parse_alerts(raw_bytes: bytes) -> list[AlertRecord]:
                 for esf_num, _, esf_val in es_fields:
                     if esf_num == 2:  # route_id
                         route_ids.append(_decode_string(esf_val))
-                    elif esf_num == 3:  # stop_id
+                    elif esf_num == 5:  # stop_id
                         stop_ids.append(_decode_string(esf_val))
             elif af_num == 10 and isinstance(af_val, bytes):  # header_text
                 header_text = _decode_translated_string(af_val)

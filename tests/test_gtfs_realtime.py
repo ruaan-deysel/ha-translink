@@ -106,7 +106,11 @@ def test_decode_translated_string() -> None:
 def test_parse_alerts_comprehensive() -> None:
     """Test parse_alerts with full alert, description-only alert, and ignored records."""
     # Build Entity 1: Full alert with header, description, route, and stop selectors
-    es_msg = _encode_field(2, 2, "ROUTE_66") + _encode_field(3, 2, "STOP_100")
+    es_msg = (
+        _encode_field(2, 2, "ROUTE_66")
+        + _encode_field(3, 0, 3)  # route_type (bus = 3)
+        + _encode_field(5, 2, "STOP_100")  # stop_id
+    )
     header_sub = _encode_field(1, 2, _encode_field(1, 2, "Delays on Route 66"))
     desc_sub = _encode_field(1, 2, _encode_field(1, 2, "Heavy traffic congestion"))
 
