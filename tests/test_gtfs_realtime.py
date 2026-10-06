@@ -296,3 +296,47 @@ def test_gtfs_realtime_extra_and_unknown_fields() -> None:
     )
     feed_alert = _encode_field(2, 2, entity_alert_empty)
     assert parse_alerts(feed_alert) == []
+
+
+def test_trip_descriptor_field2_start_time_not_route_id() -> None:
+    """Test that TripDescriptor field 2 (start_time) is ignored for route_id and field 5 is parsed."""
+    trip_desc_with_start_time = _encode_field(1, 2, "TRIP_START_TIME") + _encode_field(
+        2, 2, "08:30:00"
+    )
+
+    vp_body = _encode_field(1, 2, trip_desc_with_start_time) + _encode_field(
+        2, 2, _encode_field(1, 5, -27.47) + _encode_field(2, 5, 153.02)
+    )
+    feed_vp = _encode_field(
+        2, 2, _encode_field(1, 2, "ENT_1") + _encode_field(4, 2, vp_body)
+    )
+    vp_map = parse_vehicle_positions(feed_vp)
+    assert vp_map["TRIP_START_TIME"].route_id is None
+
+    tu_body = _encode_field(1, 2, trip_desc_with_start_time)
+    feed_tu = _encode_field(
+        2, 2, _encode_field(1, 2, "ENT_2") + _encode_field(3, 2, tu_body)
+    )
+    tu_map = parse_trip_updates(feed_tu)
+    assert tu_map["TRIP_START_TIME"].route_id is None
+
+    trip_desc_with_both = (
+        _encode_field(1, 2, "TRIP_BOTH")
+        + _encode_field(2, 2, "08:30:00")
+        + _encode_field(5, 2, "ROUTE_66")
+    )
+    feed_vp2 = _encode_field(
+        2,
+        2,
+        _encode_field(1, 2, "ENT_3")
+        + _encode_field(
+            4,
+            2,
+            _encode_field(1, 2, trip_desc_with_both)
+            + _encode_field(
+                2, 2, _encode_field(1, 5, -27.47) + _encode_field(2, 5, 153.02)
+            ),
+        ),
+    )
+    vp_map2 = parse_vehicle_positions(feed_vp2)
+    assert vp_map2["TRIP_BOTH"].route_id == "ROUTE_66"

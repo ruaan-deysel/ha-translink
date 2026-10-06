@@ -10,7 +10,6 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .client import (
@@ -47,7 +46,6 @@ from .const import (
     DOMAIN,
     MIN_SCAN_INTERVAL,
     MODE_JOURNEY,
-    STORAGE_VERSION,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,11 +76,6 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
 
         session = async_get_clientsession(hass)
         self.client = TranslinkClient(session=session)
-
-        self._store: Store[dict[str, Any]] = Store(
-            hass, STORAGE_VERSION, f"{DOMAIN}.cache.{entry.entry_id}"
-        )
-        self._cached_summary: JourneySummary | StopSummary | None = None
 
     @property
     def start_location_id(self) -> str:
@@ -236,11 +229,6 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
             destination_name_fallback=self.end_name,
         )
 
-        self._cached_summary = summary
-        # Save cache in background
-        self.hass.async_create_task(
-            self._async_save_cache(summary.model_dump(mode="json"))
-        )
         return summary
 
     async def _async_update_stop(self) -> StopSummary:
@@ -309,18 +297,7 @@ class TranslinkCoordinator(DataUpdateCoordinator[JourneySummary | StopSummary]):
             last_updated=journey_summary.last_updated,
         )
 
-        self._cached_summary = stop_summary
-        self.hass.async_create_task(
-            self._async_save_cache(stop_summary.model_dump(mode="json"))
-        )
         return stop_summary
-
-    async def _async_save_cache(self, data: dict[str, Any]) -> None:
-        """Persist latest payload to disk."""
-        try:
-            await self._store.async_save(data)
-        except Exception as err:
-            _LOGGER.debug("Failed to write Translink cache: %s", err)
 
     async def async_shutdown(self) -> None:
         """Cleanly close coordinator connections."""

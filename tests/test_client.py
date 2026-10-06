@@ -582,3 +582,46 @@ async def test_client_close_unowned_session() -> None:
     c = TranslinkClient(session=mock_session)
     await c.close()
     mock_session.close.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_search_locations_validation_error() -> None:
+    """Test search_locations wraps ValidationError in TranslinkResponseError."""
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.json = AsyncMock(return_value=[{"InvalidKey": "InvalidVal"}])
+
+    mock_session = MagicMock()
+    mock_session.get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+    mock_session.get.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.closed = False
+
+    client = TranslinkClient(session=mock_session)
+    with pytest.raises(
+        TranslinkResponseError, match="Failed to parse location search response"
+    ):
+        await client.search_locations("Central")
+
+
+@pytest.mark.asyncio
+async def test_plan_journey_validation_error() -> None:
+    """Test plan_journey wraps ValidationError in TranslinkResponseError."""
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.json = AsyncMock(return_value={"itineraries": "invalid_not_a_list"})
+
+    mock_session = MagicMock()
+    mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+    mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.closed = False
+
+    client = TranslinkClient(session=mock_session)
+    with pytest.raises(
+        TranslinkResponseError, match="Failed to parse journey planner response"
+    ):
+        await client.plan_journey(
+            start_location_id="ST:1",
+            start_name="Start",
+            end_location_id="ST:2",
+            end_name="End",
+        )

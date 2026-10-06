@@ -151,7 +151,7 @@ def parse_vehicle_positions(raw_bytes: bytes) -> dict[str, VehiclePositionRecord
                 for tf_num, _, tf_val in trip_fields:
                     if tf_num == 1:
                         trip_id = _decode_string(tf_val)
-                    elif tf_num in (2, 5):
+                    elif tf_num == 5:
                         route_id = _decode_string(tf_val)
             elif vf_num == 2 and isinstance(vf_val, bytes):  # Position
                 pos_fields = _parse_fields(vf_val)
@@ -230,7 +230,7 @@ def parse_trip_updates(raw_bytes: bytes) -> dict[str, TripUpdateRecord]:
                 for tf_num, _, tf_val in trip_fields:
                     if tf_num == 1:
                         trip_id = _decode_string(tf_val)
-                    elif tf_num in (2, 5):
+                    elif tf_num == 5:
                         route_id = _decode_string(tf_val)
             elif tuf_num == 2 and isinstance(tuf_val, bytes):  # StopTimeUpdate
                 stu_fields = _parse_fields(tuf_val)

@@ -9,6 +9,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import aiohttp
+from pydantic import ValidationError
 
 from ..const import (
     BRISBANE_TZ,
@@ -155,7 +156,14 @@ class TranslinkClient:
                 payload = await response.json()
                 if not isinstance(payload, list):
                     return []
-                return [LocationSearchResult.model_validate(item) for item in payload]
+                try:
+                    return [
+                        LocationSearchResult.model_validate(item) for item in payload
+                    ]
+                except ValidationError as err:
+                    raise TranslinkResponseError(
+                        f"Failed to parse location search response: {err}"
+                    ) from err
         except aiohttp.ClientError as err:
             raise TranslinkConnectionError(
                 f"Error connecting to Translink location search: {err}"
@@ -258,7 +266,12 @@ class TranslinkClient:
                         f"Journey planner failed with status {response.status}: {text}"
                     )
                 payload = await response.json()
-                return JourneyPlanResult.model_validate(payload)
+                try:
+                    return JourneyPlanResult.model_validate(payload)
+                except ValidationError as err:
+                    raise TranslinkResponseError(
+                        f"Failed to parse journey planner response: {err}"
+                    ) from err
         except aiohttp.ClientError as err:
             raise TranslinkConnectionError(
                 f"Error connecting to Translink journey planner: {err}"

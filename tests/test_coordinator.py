@@ -113,13 +113,11 @@ async def test_coordinator_update_journey_success(
     coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
     coordinator.client.fetch_vehicle_positions = AsyncMock(return_value={})
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, JourneySummary)
     assert summary.status in ["scheduled", "on_time", "delayed", "departed", "arrived"]
     assert summary.duration_mins == 41
-    assert coordinator._cached_summary == summary
 
 
 async def test_coordinator_update_stop_success(
@@ -135,7 +133,6 @@ async def test_coordinator_update_stop_success(
 
     coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, StopSummary)
@@ -195,7 +192,6 @@ async def test_coordinator_update_journey_without_vehicle_tracking(
 
     coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, JourneySummary)
@@ -230,24 +226,10 @@ async def test_coordinator_update_journey_plan_fallback(
     coordinator.client.plan_journey = AsyncMock(return_value=None)
     coordinator.client.fetch_vehicle_positions = AsyncMock(return_value={})
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, JourneySummary)
     assert summary.status == "no_service"
-
-
-async def test_coordinator_save_cache_error(
-    hass: HomeAssistant,
-    journey_entry: MockConfigEntry,
-) -> None:
-    """Test coordinator logs and catches cache persistence errors."""
-    with patch("custom_components.translink.coordinator.async_get_clientsession"):
-        coordinator = TranslinkCoordinator(hass, journey_entry)
-
-    coordinator._store.async_save = AsyncMock(side_effect=OSError("Disk full"))
-    # Should not raise
-    await coordinator._async_save_cache({"test": "data"})
 
 
 async def test_coordinator_update_stop_central_station(
@@ -271,7 +253,6 @@ async def test_coordinator_update_stop_central_station(
 
     coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, StopSummary)
@@ -294,7 +275,6 @@ async def test_coordinator_update_stop_empty_departures(
 
     coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, StopSummary)
@@ -333,7 +313,6 @@ async def test_coordinator_update_stop_with_walk_and_transit_legs(
 
     coordinator.client.plan_journey = AsyncMock(return_value=plan_result)
     coordinator.client.fetch_trip_updates = AsyncMock(return_value={})
-    coordinator._store.async_save = AsyncMock()
 
     summary = await coordinator._async_update_data()
     assert isinstance(summary, StopSummary)

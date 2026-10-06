@@ -94,11 +94,15 @@ jobs:
               == 0
           )
 
+          is_prerelease = bool(re.search(r"[a-zA-Z]", version))
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
               fh.write(f"version={version}\n")
               fh.write(f"tag_exists={'true' if tag_exists else 'false'}\n")
+              fh.write(f"prerelease={'true' if is_prerelease else 'false'}\n")
+              fh.write(f"make_latest={'false' if is_prerelease else 'true'}\n")
 
-          print(f"Validated version {version} (tag_exists={tag_exists})")
+          print(f"Validated version {version} (tag_exists={tag_exists}, prerelease={is_prerelease})")
           EOF
 
       - name: Create GitHub Release
@@ -109,5 +113,5 @@ jobs:
           name: ${{ steps.extract.outputs.version }}
           body_path: release_notes.md
           draft: false
-          prerelease: false
-          make_latest: "true"
+          prerelease: ${{ steps.extract.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.extract.outputs.make_latest }}
