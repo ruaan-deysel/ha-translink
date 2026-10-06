@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Query key read-only GloBird API endpoints.
+
+Usage:
+    ./script/query-api --email user@example.com --password 'secret'
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+
+def _compact(payload: dict[str, Any] | None) -> str:
+    if payload is None:
+        return "null"
+    return json.dumps(payload, indent=2, default=str)[:5000]
+
+
+async def run_query(email: str, password: str) -> int:
+    from custom_components.translink.client import (
+        GloBirdClient,
+        extract_accounts_and_services,
+    )
+
+    client = GloBirdClient()
+    try:
+        current_user = await client.authenticate(email, password)
+        print("# current_user")
+        print(_compact(current_user))
+
+        accounts, services = extract_accounts_and_services(current_user)
+        account_id = (
+            services[0].get("accountId")
+            if services
+            else (accounts[0].get("accountId") if accounts else None)
+        )
+
+        dashboard = await client.get_dashboard(account_id=account_id)
+        print("\n# dashboard")
+        print(_compact(dashboard))
+
+        balance = await client.get_balance(account_id=account_id)
+        print("\n# balance")
+        print(_compact(balance))
+
+        signup_info = await client.get_signup_info(account_id=account_id)
+        print("\n# signup_info")
+        print(_compact(signup_info))
+
+        return 0
+    except Exception as err:  # noqa: BLE001 - CLI should print actionable error.
+        print(f"query-api failed: {err}")
+        return 1
+    finally:
+        await client.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Query key GloBird API endpoints")
+    parser.add_argument("--email", required=True, help="Portal account email")
+    parser.add_argument("--password", required=True, help="Portal account password")
+    args = parser.parse_args()
+    return asyncio.run(run_query(args.email, args.password))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

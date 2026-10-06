@@ -1,0 +1,58 @@
+{
+  "entity": {
+    "sensor": {
+      "next_departure": {
+        "default": "mdi:clock-start"
+      },
+      "arrival_time": {
+        "default": "mdi:clock-end"
+      },
+      "duration": {
+        "default": "mdi:timer-outline"
+      },
+      "status": {
+        "default": "mdi:transit-connection-variant",
+        "state": {
+          "scheduled": "mdi:calendar-clock",
+          "on_time": "mdi:check-circle-outline",
+          "delayed": "mdi:alert-circle-outline",
+          "departed": "mdi:bus-clock",
+          "arrived": "mdi:map-marker-check",
+          "no_service": "mdi:cancel"
+        }
+      },
+      "next_service": {
+        "default": "mdi:train-bus"
+      },
+      "platform": {
+        "default": "mdi:train-car-platform"
+      },
+      "transfers": {
+        "default": "mdi:transit-transfer"
+      },
+      "fare": {
+        "default": "mdi:cash"
+      },
+      "delay": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "walking_distance": {
+        "default": "mdi:walk"
+      },
+      "disruptions": {
+        "default": "mdi:alert"
+      },
+      "itinerary": {
+        "default": "mdi:routes"
+      },
+      "departures_board": {
+        "default": "mdi:clipboard-list"
+      }
+    },
+    "device_tracker": {
+      "vehicle_tracker": {
+        "default": "mdi:bus-marker"
+      }
+    }
+  }
+}
