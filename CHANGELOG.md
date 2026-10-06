@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 This project uses Home Assistant's calendar versioning scheme (`YYYY.M.P`, for example `2026.10.0`).
 
+## [2026.10.3] - 2026-10-06
+
+### Changed
+- **Brand Logos and Icons**:
+  - Updated integration brand icons and logos (`icon.png`, `icon@2x.png`, `logo.png`, `logo@2x.png`) to the official Translink 3-blade swirl emblem with high-resolution transparency.
+
 ## [2026.10.2] - 2026-10-06
 
 ### Fixed
