@@ -69,11 +69,6 @@ class TranslinkVehicleTracker(
         )
 
     @property
-    def source_type(self) -> SourceType:
-        """Return the source type of the device."""
-        return SourceType.GPS
-
-    @property
     def icon(self) -> str:
         """Return dynamic icon based on vehicle transport type."""
         vehicle_type = (
@@ -96,11 +91,6 @@ class TranslinkVehicleTracker(
         if isinstance(self.coordinator.data, JourneySummary):
             return self.coordinator.data.vehicle_longitude
         return None
-
-    @property
-    def location_accuracy(self) -> float:
-        """Return location accuracy in meters."""
-        return self._attr_location_accuracy
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
