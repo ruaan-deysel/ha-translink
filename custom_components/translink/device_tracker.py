@@ -12,22 +12,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .client import JourneySummary
-from .const import CONF_NAME, DOMAIN, MODE_JOURNEY
+from .const import CONF_NAME, DOMAIN, MODE_JOURNEY, get_vehicle_icon
 from .coordinator import TranslinkCoordinator
 
 if TYPE_CHECKING:
     from . import TranslinkConfigEntry
 
 PARALLEL_UPDATES = 0
-
-_VEHICLE_ICON_MAP: dict[str, str] = {
-    "train": "mdi:train",
-    "bus": "mdi:bus",
-    "ferry": "mdi:ferry",
-    "boat": "mdi:ferry",
-    "tram": "mdi:tram",
-    "light rail": "mdi:tram",
-}
 
 
 async def async_setup_entry(
@@ -85,12 +76,12 @@ class TranslinkVehicleTracker(
     @property
     def icon(self) -> str:
         """Return dynamic icon based on vehicle transport type."""
-        if isinstance(self.coordinator.data, JourneySummary):
-            vehicle_type = (self.coordinator.data.next_service_vehicle or "").lower()
-            for key, icon in _VEHICLE_ICON_MAP.items():
-                if key in vehicle_type:
-                    return icon
-        return "mdi:bus-marker"
+        vehicle_type = (
+            self.coordinator.data.next_service_vehicle
+            if isinstance(self.coordinator.data, JourneySummary)
+            else None
+        )
+        return get_vehicle_icon(vehicle_type, default="mdi:bus-marker")
 
     @property
     def latitude(self) -> float | None:

@@ -20,6 +20,7 @@ from custom_components.translink.sensor import (
     JOURNEY_SENSORS,
     STOP_SENSORS,
     TranslinkSensor,
+    TranslinkSensorEntityDescription,
     async_setup_entry,
 )
 
@@ -254,15 +255,15 @@ def test_sensor_none_data() -> None:
         ("CityCat Boat", "mdi:ferry"),
         ("Tram", "mdi:tram"),
         ("G:link Light Rail", "mdi:tram"),
-        ("UnknownVehicle", "mdi:bus-marker"),
-        (None, "mdi:bus-marker"),
+        ("UnknownVehicle", "mdi:train-bus"),
+        (None, "mdi:train-bus"),
     ],
 )
 def test_sensor_dynamic_icons(vehicle_type: str | None, expected_icon: str) -> None:
     """Test sensor dynamic icon based on vehicle transport mode."""
-    from custom_components.translink.sensor import _get_vehicle_icon
+    from custom_components.translink.const import get_vehicle_icon
 
-    assert _get_vehicle_icon(vehicle_type) == expected_icon
+    assert get_vehicle_icon(vehicle_type) == expected_icon
 
     summary = JourneySummary(next_service_vehicle=vehicle_type)
     coordinator = FakeCoordinator(mode=MODE_JOURNEY, data=summary)
@@ -271,3 +272,23 @@ def test_sensor_dynamic_icons(vehicle_type: str | None, expected_icon: str) -> N
     next_service_desc = next(d for d in JOURNEY_SENSORS if d.key == "next_service")
     sensor = TranslinkSensor(coordinator, next_service_desc, entry)  # type: ignore[arg-type]
     assert sensor.icon == expected_icon
+
+
+def test_sensor_icon_fallback_when_coordinator_data_none() -> None:
+    """Test sensor icon fallback when coordinator.data is None."""
+    coordinator = FakeCoordinator(mode=MODE_JOURNEY, data=None)
+    entry = FakeEntry(mode=MODE_JOURNEY)
+    next_service_desc = next(d for d in JOURNEY_SENSORS if d.key == "next_service")
+    sensor = TranslinkSensor(coordinator, next_service_desc, entry)  # type: ignore[arg-type]
+    assert sensor.icon == "mdi:train-bus"
+
+    # Description with icon_fn but icon=None
+    desc_no_icon = TranslinkSensorEntityDescription(
+        key="test_no_icon",
+        translation_key="test_no_icon",
+        icon=None,
+        value_fn=lambda _: None,
+        icon_fn=lambda _: "mdi:custom",
+    )
+    sensor_no_icon = TranslinkSensor(coordinator, desc_no_icon, entry)  # type: ignore[arg-type]
+    assert sensor_no_icon.icon == "mdi:train-bus"

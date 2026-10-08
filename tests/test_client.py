@@ -402,16 +402,60 @@ def test_build_journey_summary_with_base_trip_id_correlation(
     assert _match_trip_record(None, {"123": "val"}) is None
     assert _match_trip_record("123", None) is None
     assert _match_trip_record("123", {}) is None
+    assert _match_trip_record("123", {"123": "matched"}) == "matched"
     assert (
         _match_trip_record("s_T_SPRP_9_20261008_39040630", {"39040630": "matched"})
         == "matched"
     )
     assert _match_trip_record("unmatched_trip", {"other": "val"}) is None
 
+    # Test route_id validation in _match_trip_record
+    rec_with_route = TripUpdateRecord(
+        entity_id="tu1", trip_id="39040630", route_id="SPRP"
+    )
+    rec_no_route = TripUpdateRecord(entity_id="tu2", trip_id="39040630", route_id=None)
+    # Expected route matches
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_with_route},
+            expected_route_id="SPRP",
+        )
+        is rec_with_route
+    )
+    # Expected route does not match
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_with_route},
+            expected_route_id="OTHER_ROUTE",
+        )
+        is None
+    )
+    # Record has no route_id (passes through)
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_no_route},
+            expected_route_id="SPRP",
+        )
+        is rec_no_route
+    )
+    # No expected_route_id provided (passes through)
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_with_route},
+            expected_route_id=None,
+        )
+        is rec_with_route
+    )
+
     plan = JourneyPlanResult.model_validate(plan_response_data)
     first_leg = plan.itineraries[0].legs[0]
-    # Simulate a journey planner trip ID with prefix: s_T_SPRP_9_20261008_39040630
+    assert first_leg.legRoute is not None
     first_leg.tripId = "s_T_SPRP_9_20261008_39040630"
+    first_leg.legRoute.code = "SPRP"
 
     trip_updates = {
         "39040630": TripUpdateRecord(
@@ -446,6 +490,16 @@ def test_build_journey_summary_with_base_trip_id_correlation(
     assert summary.vehicle_latitude == -27.4663
     assert summary.vehicle_longitude == 153.0228
     assert summary.vehicle_tracked is True
+
+    # Test route mismatch in build_journey_summary
+    first_leg.legRoute.code = "DIFFERENT_ROUTE"
+    summary_mismatch = build_journey_summary(
+        plan,
+        trip_updates=trip_updates,
+        vehicle_positions=vehicle_positions,
+    )
+    assert summary_mismatch.delay_mins == 0
+    assert summary_mismatch.vehicle_tracked is False
 
 
 @pytest.mark.asyncio

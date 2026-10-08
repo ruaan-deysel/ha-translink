@@ -20,32 +20,13 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import BRISBANE_TZ, CONF_NAME, DOMAIN, MODE_JOURNEY
+from .const import BRISBANE_TZ, CONF_NAME, DOMAIN, MODE_JOURNEY, get_vehicle_icon
 from .coordinator import TranslinkCoordinator
 
 if TYPE_CHECKING:
     from . import TranslinkConfigEntry
 
 PARALLEL_UPDATES = 0
-
-_VEHICLE_ICON_MAP: dict[str, str] = {
-    "train": "mdi:train",
-    "bus": "mdi:bus",
-    "ferry": "mdi:ferry",
-    "boat": "mdi:ferry",
-    "tram": "mdi:tram",
-    "light rail": "mdi:tram",
-}
-
-
-def _get_vehicle_icon(vehicle: str | None, default: str = "mdi:bus-marker") -> str:
-    """Resolve transport mode icon."""
-    if vehicle:
-        v_lower = vehicle.lower()
-        for mode, icon in _VEHICLE_ICON_MAP.items():
-            if mode in v_lower:
-                return icon
-    return default
 
 
 def _format_brisbane_time(dt: datetime | None) -> str | None:
@@ -112,12 +93,13 @@ JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
     TranslinkSensorEntityDescription(
         key="next_service",
         translation_key="next_service",
+        icon="mdi:train-bus",
         value_fn=lambda data: (
             f"{data.next_service_name} ({data.next_service_vehicle})"
             if data.next_service_name and data.next_service_vehicle
             else (data.next_service_name or "None")
         ),
-        icon_fn=lambda data: _get_vehicle_icon(data.next_service_vehicle),
+        icon_fn=lambda data: get_vehicle_icon(data.next_service_vehicle),
         attributes_fn=lambda data: {
             "route_name": data.next_service_name,
             "vehicle": data.next_service_vehicle,
@@ -220,12 +202,13 @@ STOP_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
     TranslinkSensorEntityDescription(
         key="next_service",
         translation_key="next_service",
+        icon="mdi:train-bus",
         value_fn=lambda data: (
             f"{data.next_route} ({data.next_vehicle})"
             if data.next_route and data.next_vehicle
             else (data.next_route or "None")
         ),
-        icon_fn=lambda data: _get_vehicle_icon(data.next_vehicle),
+        icon_fn=lambda data: get_vehicle_icon(data.next_vehicle),
         attributes_fn=lambda data: {
             "route": data.next_route,
             "vehicle": data.next_vehicle,
@@ -348,8 +331,10 @@ class TranslinkSensor(
     @property
     def icon(self) -> str | None:
         """Return the icon of the sensor."""
-        if self.entity_description.icon_fn and self.coordinator.data:
-            return self.entity_description.icon_fn(self.coordinator.data)
+        if self.entity_description.icon_fn:
+            if self.coordinator.data:
+                return self.entity_description.icon_fn(self.coordinator.data)
+            return self.entity_description.icon or "mdi:train-bus"
         return super().icon
 
     @property
