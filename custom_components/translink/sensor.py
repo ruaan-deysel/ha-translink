@@ -38,7 +38,7 @@ _VEHICLE_ICON_MAP: dict[str, str] = {
 }
 
 
-def _get_vehicle_icon(vehicle: str | None, default: str = "mdi:train-bus") -> str:
+def _get_vehicle_icon(vehicle: str | None, default: str = "mdi:bus-marker") -> str:
     """Resolve transport mode icon."""
     if vehicle:
         v_lower = vehicle.lower()

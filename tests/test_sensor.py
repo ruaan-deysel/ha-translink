@@ -254,8 +254,8 @@ def test_sensor_none_data() -> None:
         ("CityCat Boat", "mdi:ferry"),
         ("Tram", "mdi:tram"),
         ("G:link Light Rail", "mdi:tram"),
-        ("UnknownVehicle", "mdi:train-bus"),
-        (None, "mdi:train-bus"),
+        ("UnknownVehicle", "mdi:bus-marker"),
+        (None, "mdi:bus-marker"),
     ],
 )
 def test_sensor_dynamic_icons(vehicle_type: str | None, expected_icon: str) -> None:

@@ -22,7 +22,7 @@
         }
       },
       "next_service": {
-        "default": "mdi:train-bus"
+        "default": "mdi:bus-marker"
       },
       "platform": {
         "default": "mdi:bus-stop-uncovered"
