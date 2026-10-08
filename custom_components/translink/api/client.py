@@ -26,6 +26,7 @@ from .gtfs_realtime import (
     AlertRecord,
     TripUpdateRecord,
     VehiclePositionRecord,
+    extract_base_trip_id,
     parse_alerts,
     parse_trip_updates,
     parse_vehicle_positions,
@@ -343,6 +344,20 @@ class TranslinkClient:
             return []
 
 
+def _match_trip_record(
+    trip_id: str | None, records: dict[str, Any] | None
+) -> Any | None:
+    """Find matching GTFS-RT record by exact trip ID or normalized base trip ID."""
+    if not trip_id or not records:
+        return None
+    if trip_id in records:
+        return records[trip_id]
+    base_id = extract_base_trip_id(trip_id)
+    if base_id and base_id in records:
+        return records[base_id]
+    return None
+
+
 def build_journey_summary(
     plan: JourneyPlanResult,
     vehicle_positions: dict[str, VehiclePositionRecord] | None = None,
@@ -450,8 +465,8 @@ def build_journey_summary(
 
     # Check delays via TripUpdates
     delay_mins = 0
-    if trip_updates and trip_id and trip_id in trip_updates:
-        tu = trip_updates[trip_id]
+    tu = _match_trip_record(trip_id, trip_updates)
+    if tu is not None:
         delay_mins = max(0, round(tu.delay_seconds / 60))
 
     # Determine status
@@ -475,8 +490,8 @@ def build_journey_summary(
     veh_speed: float | None = None
     veh_tracked = False
 
-    if vehicle_positions and trip_id and trip_id in vehicle_positions:
-        vp = vehicle_positions[trip_id]
+    vp = _match_trip_record(trip_id, vehicle_positions)
+    if vp is not None:
         veh_id = vp.vehicle_id or vp.entity_id
         veh_label = vp.vehicle_label
         veh_lat = vp.latitude
