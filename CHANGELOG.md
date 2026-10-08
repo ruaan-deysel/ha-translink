@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 
 This project uses Home Assistant's calendar versioning scheme (`YYYY.M.P`, for example `2026.10.0`).
 
+## [2026.10.4] - 2026-10-08
+
+### Added
+- **Dynamic Transport Mode Icons for Map and Dashboard Entities**:
+  - Live vehicle tracker (`device_tracker.<entry>_vehicle_tracker`) now renders transport-specific Material Design icons dynamically on the Home Assistant Map area and Map cards based on the active vehicle mode:
+    - Train: `mdi:train`
+    - Bus: `mdi:bus`
+    - Ferry: `mdi:ferry`
+    - Tram / Light Rail: `mdi:tram`
+    - Fallback: `mdi:bus-marker`
+  - Next Service sensor (`sensor.<entry>_next_service`) also dynamically adjusts its entity icon to match the mode of transport for the upcoming journey or departure.
+- **Enhanced GTFS-Realtime Trip & Vehicle Correlation**:
+  - Fixed cross-feed correlation between Journey Planner itinerary legs (which format trip identifiers as `s_T_<service>_<dir>_<date>_<trip_id>`) and GTFS-RT `VehiclePositions` and `TripUpdates` feeds (which format trip identifiers as `<trip_id>-<agency>...`).
+  - Extracted and indexed normalized base trip IDs across feeds, allowing real-time GPS locations, speed, bearing, and live arrival delays to accurately track trains, buses, ferries, and trams in real time on the Map.
+
+### Changed
+- **Home Assistant 2026.10 Compatibility & Standards**:
+  - Modernized platform setup entry signatures across all entity platforms (`device_tracker`, `sensor`, `event`, and `diagnostics`) with `TranslinkConfigEntry` type annotations.
+  - Aligned `TrackerEntity` location accuracy reporting to use `float` values (`15.0`) in accordance with the latest Home Assistant core specifications.
+  - Added `route_color` attribute to `device_tracker` extra state attributes to support custom card rendering and map track styling.
+
 ## [2026.10.3] - 2026-10-06
 
 ### Changed

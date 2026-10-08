@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "translink"
@@ -62,7 +61,24 @@ TIMEZONE_BRISBANE: Final = "Australia/Brisbane"
 BRISBANE_TZ: Final = TIMEZONE_BRISBANE
 
 # Default intervals
-DEFAULT_UPDATE_INTERVAL: Final = timedelta(seconds=60)
-DEFAULT_VEHICLE_FEED_INTERVAL: Final = timedelta(seconds=30)
-
 STORAGE_VERSION: Final = 1
+
+# Transport mode icon mappings
+VEHICLE_ICON_MAP: Final[dict[str, str]] = {
+    "train": "mdi:train",
+    "bus": "mdi:bus",
+    "ferry": "mdi:ferry",
+    "boat": "mdi:ferry",
+    "tram": "mdi:tram",
+    "light rail": "mdi:tram",
+}
+
+
+def get_vehicle_icon(vehicle: str | None, default: str = "mdi:train-bus") -> str:
+    """Resolve transport mode icon from vehicle string."""
+    if vehicle:
+        v_lower = vehicle.lower()
+        for mode, icon in VEHICLE_ICON_MAP.items():
+            if mode in v_lower:
+                return icon
+    return default

@@ -2,26 +2,28 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.device_tracker.const import SourceType
 from homeassistant.components.device_tracker.entity import TrackerEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .client import JourneySummary
-from .const import CONF_NAME, DOMAIN, MODE_JOURNEY
+from .const import CONF_NAME, DOMAIN, MODE_JOURNEY, get_vehicle_icon
 from .coordinator import TranslinkCoordinator
+
+if TYPE_CHECKING:
+    from . import TranslinkConfigEntry
 
 PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: TranslinkConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Translink live vehicle device tracker from config entry."""
@@ -41,11 +43,13 @@ class TranslinkVehicleTracker(
 
     _attr_has_entity_name = True
     _attr_translation_key = "vehicle_tracker"
+    _attr_source_type = SourceType.GPS
+    _attr_location_accuracy = 15.0
 
     def __init__(
         self,
         coordinator: TranslinkCoordinator,
-        entry: ConfigEntry,
+        entry: TranslinkConfigEntry,
     ) -> None:
         """Initialize the tracker."""
         super().__init__(coordinator)
@@ -65,9 +69,14 @@ class TranslinkVehicleTracker(
         )
 
     @property
-    def source_type(self) -> SourceType:
-        """Return the source type of the device."""
-        return SourceType.GPS
+    def icon(self) -> str:
+        """Return dynamic icon based on vehicle transport type."""
+        vehicle_type = (
+            self.coordinator.data.next_service_vehicle
+            if isinstance(self.coordinator.data, JourneySummary)
+            else None
+        )
+        return get_vehicle_icon(vehicle_type, default="mdi:bus-marker")
 
     @property
     def latitude(self) -> float | None:
@@ -84,11 +93,6 @@ class TranslinkVehicleTracker(
         return None
 
     @property
-    def location_accuracy(self) -> int:
-        """Return location accuracy in meters."""
-        return 15
-
-    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return tracker attributes."""
         if not isinstance(self.coordinator.data, JourneySummary):
@@ -101,6 +105,7 @@ class TranslinkVehicleTracker(
             "trip_id": data.trip_id,
             "route_name": data.next_service_name,
             "vehicle_type": data.next_service_vehicle,
+            "route_color": data.next_service_color,
             "bearing": data.vehicle_bearing,
             "speed": data.vehicle_speed,
             "is_live_tracked": data.vehicle_tracked,

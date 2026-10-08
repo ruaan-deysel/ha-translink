@@ -361,3 +361,43 @@ def test_trip_descriptor_field2_start_time_not_route_id() -> None:
     )
     vp_map2 = parse_vehicle_positions(feed_vp2)
     assert vp_map2["TRIP_BOTH"].route_id == "ROUTE_66"
+
+
+def test_extract_base_trip_id_variants() -> None:
+    """Test extract_base_trip_id with none, empty, hyphenated, and prefixed IDs."""
+    from custom_components.translink.api.gtfs_realtime import (
+        extract_base_trip_id,
+    )
+
+    assert extract_base_trip_id(None) is None
+    assert extract_base_trip_id("") is None
+    assert extract_base_trip_id("39040630-QR 26_27-44171-DY37") == "39040630"
+    assert extract_base_trip_id("s_T_SPRP_9_20261008_39040630") == "39040630"
+    assert extract_base_trip_id("39040630") == "39040630"
+    assert extract_base_trip_id("   ") is None
+
+
+def test_gtfs_base_trip_id_indexing() -> None:
+    """Test that feeds index by both full trip ID and base trip ID."""
+    trip_desc = _encode_field(1, 2, "39040630-QR 26_27-44171-DY37") + _encode_field(
+        5, 2, "SPRP"
+    )
+    pos_desc = _encode_field(1, 5, -27.46) + _encode_field(2, 5, 153.02)
+    vp_body = _encode_field(1, 2, trip_desc) + _encode_field(2, 2, pos_desc)
+    feed_vp = _encode_field(
+        2, 2, _encode_field(1, 2, "ENT_BASE_VP") + _encode_field(4, 2, vp_body)
+    )
+
+    vp_map = parse_vehicle_positions(feed_vp)
+    assert "39040630-QR 26_27-44171-DY37" in vp_map
+    assert "39040630" in vp_map
+    assert vp_map["39040630"].route_id == "SPRP"
+
+    tu_body = _encode_field(1, 2, trip_desc) + _encode_field(5, 0, 120)
+    feed_tu = _encode_field(
+        2, 2, _encode_field(1, 2, "ENT_BASE_TU") + _encode_field(3, 2, tu_body)
+    )
+    tu_map = parse_trip_updates(feed_tu)
+    assert "39040630-QR 26_27-44171-DY37" in tu_map
+    assert "39040630" in tu_map
+    assert tu_map["39040630"].delay_seconds == 120

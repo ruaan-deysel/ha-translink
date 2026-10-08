@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .client import redact_sensitive
 from .const import DOMAIN
 from .coordinator import TranslinkCoordinator
 
+if TYPE_CHECKING:
+    from . import TranslinkConfigEntry
+
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: TranslinkConfigEntry
 ) -> dict[str, Any]:
     """Return redacted diagnostics for a config entry."""
     coordinator: TranslinkCoordinator | None = getattr(

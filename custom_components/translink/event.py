@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.components.event import EventEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -11,6 +12,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_NAME, DOMAIN, MODE_JOURNEY
 from .coordinator import TranslinkCoordinator
+
+if TYPE_CHECKING:
+    from . import TranslinkConfigEntry
 
 EVENT_TYPE_DISRUPTION = "disruption"
 EVENT_TYPE_CLEARED = "cleared"
@@ -20,7 +24,7 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: TranslinkConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Translink disruption event entities from a config entry."""
@@ -42,7 +46,7 @@ class TranslinkDisruptionEvent(
     def __init__(
         self,
         coordinator: TranslinkCoordinator,
-        entry: ConfigEntry,
+        entry: TranslinkConfigEntry,
     ) -> None:
         """Initialize the disruption event entity."""
         super().__init__(coordinator)

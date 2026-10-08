@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 from homeassistant.components.sensor import (
@@ -14,15 +14,17 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import BRISBANE_TZ, CONF_NAME, DOMAIN, MODE_JOURNEY
+from .const import BRISBANE_TZ, CONF_NAME, DOMAIN, MODE_JOURNEY, get_vehicle_icon
 from .coordinator import TranslinkCoordinator
+
+if TYPE_CHECKING:
+    from . import TranslinkConfigEntry
 
 PARALLEL_UPDATES = 0
 
@@ -40,6 +42,7 @@ class TranslinkSensorEntityDescription(SensorEntityDescription):
 
     value_fn: Callable[[Any], Any]
     attributes_fn: Callable[[Any], dict[str, Any]] | None = None
+    icon_fn: Callable[[Any], str | None] | None = None
 
 
 JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
@@ -90,11 +93,13 @@ JOURNEY_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
     TranslinkSensorEntityDescription(
         key="next_service",
         translation_key="next_service",
+        icon="mdi:train-bus",
         value_fn=lambda data: (
             f"{data.next_service_name} ({data.next_service_vehicle})"
             if data.next_service_name and data.next_service_vehicle
             else (data.next_service_name or "None")
         ),
+        icon_fn=lambda data: get_vehicle_icon(data.next_service_vehicle),
         attributes_fn=lambda data: {
             "route_name": data.next_service_name,
             "vehicle": data.next_service_vehicle,
@@ -197,11 +202,13 @@ STOP_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
     TranslinkSensorEntityDescription(
         key="next_service",
         translation_key="next_service",
+        icon="mdi:train-bus",
         value_fn=lambda data: (
             f"{data.next_route} ({data.next_vehicle})"
             if data.next_route and data.next_vehicle
             else (data.next_route or "None")
         ),
+        icon_fn=lambda data: get_vehicle_icon(data.next_vehicle),
         attributes_fn=lambda data: {
             "route": data.next_route,
             "vehicle": data.next_vehicle,
@@ -264,7 +271,7 @@ STOP_SENSORS: tuple[TranslinkSensorEntityDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: TranslinkConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Translink sensors from config entry."""
@@ -297,7 +304,7 @@ class TranslinkSensor(
         self,
         coordinator: TranslinkCoordinator,
         description: TranslinkSensorEntityDescription,
-        entry: ConfigEntry,
+        entry: TranslinkConfigEntry,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -320,6 +327,15 @@ class TranslinkSensor(
             model=device_model,
             entry_type=DeviceEntryType.SERVICE,
         )
+
+    @property
+    def icon(self) -> str | None:
+        """Return the icon of the sensor."""
+        if self.entity_description.icon_fn:
+            if self.coordinator.data:
+                return self.entity_description.icon_fn(self.coordinator.data)
+            return self.entity_description.icon or "mdi:train-bus"
+        return super().icon
 
     @property
     def native_value(self) -> Any:

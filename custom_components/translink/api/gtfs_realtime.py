@@ -125,6 +125,23 @@ def _decode_translated_string(data: bytes) -> str:
     return ""
 
 
+def extract_base_trip_id(trip_id: str | None) -> str | None:
+    """Extract normalized base trip ID for cross-feed correlation.
+
+    Translink Journey Planner returns trip IDs such as 's_T_SPRP_9_20261008_39040630'
+    where the final segment is the base GTFS trip ID. GTFS-RT feeds provide trip IDs
+    such as '39040630-QR 26_27-44171-DY37' where the prefix before the hyphen is the
+    base GTFS trip ID.
+    """
+    if not trip_id:
+        return None
+    base = trip_id.split("-")[0].strip()
+    if "_" in base:
+        parts = base.split("_")
+        base = parts[-1].strip()
+    return base or None
+
+
 def parse_vehicle_positions(raw_bytes: bytes) -> dict[str, VehiclePositionRecord]:
     """Parse GTFS-RT VehiclePositions binary payload into a lookup dict."""
     result: dict[str, VehiclePositionRecord] = {}
@@ -201,6 +218,9 @@ def parse_vehicle_positions(raw_bytes: bytes) -> dict[str, VehiclePositionRecord
             )
             if trip_id:
                 result[trip_id] = record
+                base_id = extract_base_trip_id(trip_id)
+                if base_id and base_id not in result:
+                    result[base_id] = record
             if veh_id:
                 result[veh_id] = record
             result[entity_id] = record
@@ -271,6 +291,9 @@ def parse_trip_updates(raw_bytes: bytes) -> dict[str, TripUpdateRecord]:
         )
         if trip_id:
             result[trip_id] = record
+            base_id = extract_base_trip_id(trip_id)
+            if base_id and base_id not in result:
+                result[base_id] = record
         result[entity_id] = record
 
     return result

@@ -388,6 +388,120 @@ def test_build_journey_summary_with_delay_and_vehicle(
     assert summary_arrived.status == "arrived"
 
 
+def test_build_journey_summary_with_base_trip_id_correlation(
+    plan_response_data: dict[str, Any],
+) -> None:
+    """Test correlation succeeds when GTFS-RT feed uses normalized base trip ID."""
+    from custom_components.translink.api.client import _match_trip_record
+    from custom_components.translink.api.gtfs_realtime import (
+        TripUpdateRecord,
+        VehiclePositionRecord,
+    )
+
+    # Test _match_trip_record edge cases
+    assert _match_trip_record(None, {"123": "val"}) is None
+    assert _match_trip_record("123", None) is None
+    assert _match_trip_record("123", {}) is None
+    assert _match_trip_record("123", {"123": "matched"}) == "matched"
+    assert (
+        _match_trip_record("s_T_SPRP_9_20261008_39040630", {"39040630": "matched"})
+        == "matched"
+    )
+    assert _match_trip_record("unmatched_trip", {"other": "val"}) is None
+
+    # Test route_id validation in _match_trip_record
+    rec_with_route = TripUpdateRecord(
+        entity_id="tu1", trip_id="39040630", route_id="SPRP"
+    )
+    rec_no_route = TripUpdateRecord(entity_id="tu2", trip_id="39040630", route_id=None)
+    # Expected route matches
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_with_route},
+            expected_route_id="SPRP",
+        )
+        is rec_with_route
+    )
+    # Expected route does not match
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_with_route},
+            expected_route_id="OTHER_ROUTE",
+        )
+        is None
+    )
+    # Record has no route_id (passes through)
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_no_route},
+            expected_route_id="SPRP",
+        )
+        is rec_no_route
+    )
+    # No expected_route_id provided (passes through)
+    assert (
+        _match_trip_record(
+            "s_T_SPRP_9_20261008_39040630",
+            {"39040630": rec_with_route},
+            expected_route_id=None,
+        )
+        is rec_with_route
+    )
+
+    plan = JourneyPlanResult.model_validate(plan_response_data)
+    first_leg = plan.itineraries[0].legs[0]
+    assert first_leg.legRoute is not None
+    first_leg.tripId = "s_T_SPRP_9_20261008_39040630"
+    first_leg.legRoute.code = "SPRP"
+
+    trip_updates = {
+        "39040630": TripUpdateRecord(
+            entity_id="tu_base",
+            trip_id="39040630-QR 26_27-44171-DY37",
+            route_id="SPRP",
+            delay_seconds=180,
+        )
+    }
+    vehicle_positions = {
+        "39040630": VehiclePositionRecord(
+            entity_id="vp_base",
+            vehicle_id="DY37",
+            vehicle_label="DY37",
+            trip_id="39040630-QR 26_27-44171-DY37",
+            route_id="SPRP",
+            latitude=-27.4663,
+            longitude=153.0228,
+            speed=18.5,
+            bearing=90.0,
+        )
+    }
+
+    summary = build_journey_summary(
+        plan,
+        trip_updates=trip_updates,
+        vehicle_positions=vehicle_positions,
+    )
+    assert summary.delay_mins == 3
+    assert summary.vehicle_id == "DY37"
+    assert summary.vehicle_label == "DY37"
+    assert summary.vehicle_latitude == -27.4663
+    assert summary.vehicle_longitude == 153.0228
+    assert summary.vehicle_tracked is True
+
+    # Test route mismatch in build_journey_summary
+    first_leg.legRoute.code = "DIFFERENT_ROUTE"
+    summary_mismatch = build_journey_summary(
+        plan,
+        trip_updates=trip_updates,
+        vehicle_positions=vehicle_positions,
+    )
+    assert summary_mismatch.delay_mins == 0
+    assert summary_mismatch.vehicle_tracked is False
+
+
 @pytest.mark.asyncio
 async def test_client_own_session_lifecycle() -> None:
     """Test client handles creating its own session and closing cleanly."""

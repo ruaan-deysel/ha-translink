@@ -20,6 +20,7 @@ from custom_components.translink.sensor import (
     JOURNEY_SENSORS,
     STOP_SENSORS,
     TranslinkSensor,
+    TranslinkSensorEntityDescription,
     async_setup_entry,
 )
 
@@ -143,6 +144,7 @@ def test_journey_sensor_properties(sample_journey_summary: JourneySummary) -> No
     assert sensors["duration"].native_value == 41
     assert sensors["status"].native_value == "on_time"
     assert sensors["next_service"].native_value == "T2 Springfield Central (Train)"
+    assert sensors["next_service"].icon == "mdi:train"
     assert sensors["platform"].native_value == "5"
     assert sensors["platform"].icon == "mdi:bus-stop-uncovered"
     assert sensors["transfers"].native_value == 0
@@ -240,3 +242,53 @@ def test_sensor_none_data() -> None:
 
     assert sensor.native_value is None
     assert sensor.extra_state_attributes == {}
+    assert sensor.icon is None
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "expected_icon"),
+    [
+        ("Train", "mdi:train"),
+        ("Queensland Rail Train", "mdi:train"),
+        ("Bus", "mdi:bus"),
+        ("Ferry", "mdi:ferry"),
+        ("CityCat Boat", "mdi:ferry"),
+        ("Tram", "mdi:tram"),
+        ("G:link Light Rail", "mdi:tram"),
+        ("UnknownVehicle", "mdi:train-bus"),
+        (None, "mdi:train-bus"),
+    ],
+)
+def test_sensor_dynamic_icons(vehicle_type: str | None, expected_icon: str) -> None:
+    """Test sensor dynamic icon based on vehicle transport mode."""
+    from custom_components.translink.const import get_vehicle_icon
+
+    assert get_vehicle_icon(vehicle_type) == expected_icon
+
+    summary = JourneySummary(next_service_vehicle=vehicle_type)
+    coordinator = FakeCoordinator(mode=MODE_JOURNEY, data=summary)
+    entry = FakeEntry(mode=MODE_JOURNEY)
+    # Find next_service description
+    next_service_desc = next(d for d in JOURNEY_SENSORS if d.key == "next_service")
+    sensor = TranslinkSensor(coordinator, next_service_desc, entry)  # type: ignore[arg-type]
+    assert sensor.icon == expected_icon
+
+
+def test_sensor_icon_fallback_when_coordinator_data_none() -> None:
+    """Test sensor icon fallback when coordinator.data is None."""
+    coordinator = FakeCoordinator(mode=MODE_JOURNEY, data=None)
+    entry = FakeEntry(mode=MODE_JOURNEY)
+    next_service_desc = next(d for d in JOURNEY_SENSORS if d.key == "next_service")
+    sensor = TranslinkSensor(coordinator, next_service_desc, entry)  # type: ignore[arg-type]
+    assert sensor.icon == "mdi:train-bus"
+
+    # Description with icon_fn but icon=None
+    desc_no_icon = TranslinkSensorEntityDescription(
+        key="test_no_icon",
+        translation_key="test_no_icon",
+        icon=None,
+        value_fn=lambda _: None,
+        icon_fn=lambda _: "mdi:custom",
+    )
+    sensor_no_icon = TranslinkSensor(coordinator, desc_no_icon, entry)  # type: ignore[arg-type]
+    assert sensor_no_icon.icon == "mdi:train-bus"

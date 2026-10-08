@@ -102,6 +102,8 @@ async def test_setup_device_tracker_enabled(
     assert attrs["is_live_tracked"] is True
     assert attrs["bearing"] == 90.0
     assert attrs["speed"] == 12.5
+    assert tracker.icon == "mdi:bus"
+    assert tracker.location_accuracy == 15.0
 
 
 @pytest.mark.asyncio
@@ -141,3 +143,31 @@ def test_tracker_non_journey_data() -> None:
     assert tracker.latitude is None
     assert tracker.longitude is None
     assert tracker.extra_state_attributes == {}
+    assert tracker.icon == "mdi:bus-marker"
+
+
+@pytest.mark.parametrize(
+    ("vehicle_type", "expected_icon"),
+    [
+        ("Train", "mdi:train"),
+        ("Queensland Rail Train", "mdi:train"),
+        ("Bus", "mdi:bus"),
+        ("Ferry", "mdi:ferry"),
+        ("CityCat Boat", "mdi:ferry"),
+        ("Tram", "mdi:tram"),
+        ("G:link Light Rail", "mdi:tram"),
+        ("UnknownVehicle", "mdi:bus-marker"),
+        (None, "mdi:bus-marker"),
+    ],
+)
+def test_tracker_dynamic_icons(vehicle_type: str | None, expected_icon: str) -> None:
+    """Test dynamic icons based on vehicle transport mode."""
+    summary = JourneySummary(
+        next_service_vehicle=vehicle_type,
+        vehicle_latitude=-27.46,
+        vehicle_longitude=153.02,
+    )
+    coordinator = FakeCoordinator(mode=MODE_JOURNEY, data=summary)
+    entry = FakeEntry()
+    tracker = TranslinkVehicleTracker(coordinator, entry)  # type: ignore[arg-type]
+    assert tracker.icon == expected_icon
